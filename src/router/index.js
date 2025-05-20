@@ -1,0 +1,36 @@
+import { createRouter, createWebHistory } from 'vue-router'
+import HomeView from '../views/HomeView.vue'
+import SocialView from '../views/SocialView.vue'
+import MatchView from '../views/MatchView.vue'
+import ProfileView from '../views/ProfileView.vue'
+import AdminView from '../views/AdminView.vue'
+import LoginView from '../views/LoginView.vue'
+import { useAuthStore } from '../stores/authStore'
+
+const routes = [
+  { path: '/', name: 'Home', component: HomeView },
+  { path: '/login', name: 'Login', component: LoginView },
+  { path: '/social', name: 'Social', component: SocialView, meta: { requiresAuth: true } },
+  { path: '/match', name: 'Match', component: MatchView, meta: { requiresAuth: true } },
+  { path: '/profile', name: 'Profile', component: ProfileView, meta: { requiresAuth: true } },
+  { path: '/admin', name: 'Admin', component: AdminView, meta: { requiresAdmin: true } }
+]
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes
+})
+
+router.beforeEach((to, from, next) => {
+  const auth = useAuthStore()
+
+  if (to.meta.requiresAuth && !auth.isAuthenticated) {
+    next('/login')
+  } else if (to.meta.requiresAdmin && !auth.isAdmin) {
+    next('/login')
+  } else {
+    next()
+  }
+})
+
+export default router
