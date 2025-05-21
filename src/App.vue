@@ -1,18 +1,5 @@
 <template>
     <TheHeader />
-    <!-- <header class="header">
-      <h1>🗓 Умный календарь</h1>
-      <nav class="nav">
-        <router-link to="/">🏠 Главная</router-link>
-        <router-link to="/social">👥 Друзья и группы</router-link>
-        <router-link to="/match">🧩 Совпадения</router-link>
-        <router-link to="/profile">🙍‍♂️ Профиль</router-link>
-        <router-link v-if="auth.isAdmin" to="/admin">🔧 Админка</router-link>
-        <router-link to="/login">🔐 Вход</router-link>
-        <button v-if="auth.isAuthenticated" @click="logout">🚪 Выйти</button>
-      </nav>
-      <p v-if="auth.isAuthenticated">Вы вошли как <strong>{{ auth.user.name }}</strong> ({{ auth.user.role }})</p>
-    </header> -->
     <router-view />
 </template>
 
@@ -67,3 +54,16 @@ main {
   margin-top: 2rem;
 }
 </style>
+<!-- <header class="header">
+      <h1>🗓 Умный календарь</h1>
+      <nav class="nav">
+        <router-link to="/">🏠 Главная</router-link>
+        <router-link to="/social">👥 Друзья и группы</router-link>
+        <router-link to="/match">🧩 Совпадения</router-link>
+        <router-link to="/profile">🙍‍♂️ Профиль</router-link>
+        <router-link v-if="auth.isAdmin" to="/admin">🔧 Админка</router-link>
+        <router-link to="/login">🔐 Вход</router-link>
+        <button v-if="auth.isAuthenticated" @click="logout">🚪 Выйти</button>
+      </nav>
+      <p v-if="auth.isAuthenticated">Вы вошли как <strong>{{ auth.user.name }}</strong> ({{ auth.user.role }})</p>
+    </header> -->

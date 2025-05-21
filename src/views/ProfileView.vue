@@ -7,12 +7,8 @@
           <!-- <img src="" alt="avatar" id="avatar" width="100" height="200"> -->
         </div>
         <div class="nick">Здесь должен быть никнейм</div>
-        <div class="color">Здесь должна быть кнопка к настройке цветовой палитры
-          <!-- <button type="button" id="color-pallete" class="color-btn"></button> -->
-        </div>
-        <div class="settings">Настройка профиля
-          <!-- <button type="button" id="settings" class="settings-btn"></button> -->
-        </div>
+        <button type="button" id="profile-color-btn" class="color-btn"><p>цветовая палитра</p></button>
+        <button type="button" id="settings" class="settings-btn"><p>редактирование профиля</p></button>        
       </div>
       <div class="calendary">
         <p>Заглушка, постараться реализовать здесь мотивирующие сообщения на каждый день</p>

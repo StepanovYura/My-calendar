@@ -9,24 +9,24 @@
       <div class="nowData"><p>{{ currentDate }}</p></div>
       <div class="search">
         <form>
-          <input type="search" name="text" class="serach" placeholder="Найти дату">
-          <input type="submit" name="submit" class="submit" value="Найти">
+          <input type="search" name="text" class="search":class="{active: $route.path !== '/'}" placeholder="Найти дату">
+          <input type="submit" name="submit" class="submit":class="{active: $route.path !== '/'}" value="Найти">
         </form>
       </div>
       <div class="nav-buttons">
-        <RouterLink to="/" class="icons active" id="schedule">
+        <RouterLink to="/" class="icons":class="{active: $route.path === '/'}" id="schedule">
           <img src="../assets/shedule-light-48.png" alt="sched">
         </RouterLink>
-        <RouterLink to="/social" class="icons" id="communication">
+        <RouterLink to="/social" class="icons":class="{active: $route.path === '/social'}" id="communication">
           <img src="../assets/community-light-50.png" alt="comm">
         </RouterLink>
-        <RouterLink to="/match" class="icons" id="matched">
+        <RouterLink to="/match" class="icons":class="{active: $route.path === '/match'}" id="matched">
           <img src="../assets/match-light-50.png" alt="match">
         </RouterLink>
-        <RouterLink to="/messages" class="icons" id="message">
+        <RouterLink to="/messages" class="icons":class="{active: $route.path === '/messages'}" id="message">
           <img src="../assets/message-light-48.png" alt="mes">
         </RouterLink>
-        <RouterLink to="/profile" class="icons" id="profile">
+        <RouterLink to="/profile" class="icons":class="{active: $route.path === '/profile'}" id="profile">
           <img src="../assets/profile-light-48.png" alt="prof">
         </RouterLink>
       </div>
@@ -80,6 +80,11 @@ function toggleTheme() {
 .icons.active > img {
     transform: scale(1.2);
     border-radius: 50%;
+}
+
+.search.active,
+.submit.active {
+  visibility: hidden
 }
 
 #add-event-button > img {
