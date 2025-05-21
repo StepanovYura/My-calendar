@@ -40,17 +40,21 @@ body {
   color: white;
   padding: 1rem;
 }
+
 .nav {
   margin-top: 0.5rem;
 }
+
 .nav a {
   margin-right: 10px;
   color: #ecf0f1;
   text-decoration: none;
 }
+
 .nav a.router-link-active {
   font-weight: bold;
 }
+
 button {
   background: #e74c3c;
   border: none;
@@ -58,6 +62,7 @@ button {
   padding: 5px 10px;
   cursor: pointer;
 }
+
 main {
   margin-top: 2rem;
 }

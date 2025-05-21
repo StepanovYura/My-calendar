@@ -2,7 +2,7 @@
   <header>
     <nav class="navbar">
       <div class="logo">
-        <a href="#">
+        <a href="/">
           <img src="" alt="logo" />
         </a>
       </div>
@@ -87,7 +87,7 @@ function toggleTheme() {
 }
 
 .theme {
-    background: none;
+    background-color: rgb(173, 173, 173);
     border: none;
     cursor: pointer;
 }

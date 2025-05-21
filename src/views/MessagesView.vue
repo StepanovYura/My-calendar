@@ -3,19 +3,14 @@
   <main class="container">
     <div class="views">
       <div class="choice-friend">
-        <div class="avatarka">Здесь должно быть фото или стандартное фото
-          <!-- <img src="" alt="avatar" id="avatar" width="100" height="200"> -->
-        </div>
-        <div class="nick">Здесь должен быть никнейм</div>
-        <div class="color">Здесь должна быть кнопка к настройке цветовой палитры
-          <!-- <button type="button" id="color-pallete" class="color-btn"></button> -->
-        </div>
-        <div class="settings">Настройка профиля
-          <!-- <button type="button" id="settings" class="settings-btn"></button> -->
-        </div>
+        <input type="checkbox" id="filter-message-requestToFriend" name="filter-message" value="request">
+        <label for="filter-message-requestToFriend">Запросы в друзья</label>
+
+        <input type="checkbox" id="filter-message-alert" name="filter-message" value="alert">
+        <label for="filter-message-alert">Оповещения</label>
       </div>
       <div class="calendary">
-        <p>Заглушка, постараться реализовать здесь мотивирующие сообщения на каждый день</p>
+        <p>Заглушка</p>
       </div>
     </div>
   </main>
@@ -23,6 +18,7 @@
     <p>Пока заглушка</p>
   </footer>
 </template>
+
 
 <style scoped>
 body {
@@ -120,7 +116,7 @@ body {
     padding: 2rem 1rem 0 1rem;
     background-color: white;
     border-radius: 4px;
-    /* box-shadow: 0 0 1px 1px rgba(0, 0, 0, 0.3); */
+    box-shadow: 0 0 1px 1px rgba(0, 0, 0, 0.3);
     gap: 5px;
 
 }
@@ -144,7 +140,6 @@ body {
 
     background-color: white;
     border-radius: 4px;
-    box-shadow: 0 0 1px 1px rgba(0, 0, 0, 0.3);
 }
 
 .view-choice {
@@ -160,12 +155,11 @@ body {
 }
 
 .calendary {
-    flex: 3;
+    flex: 8;
 
     background-color: white;
     border-radius: 4px;
-    /* box-shadow: 0 0 1px 1px rgba(0, 0, 0, 0.3); */
-    padding-left: 20px;
+    box-shadow: 0 0 1px 1px rgba(0, 0, 0, 0.3);
 }
 
 #add-event-button {
