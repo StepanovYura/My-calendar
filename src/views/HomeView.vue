@@ -3,14 +3,27 @@
   <main class="container">
     <div class="holder-choice">
       <form id="choice">
-        <select name="range" id="range-select">
-          <option value="day">День</option>
-          <option value="week">Неделя</option>
-          <option value="month">Месяц</option>
-        </select>
+        <select name="range" id="range-mode-select" v-model="rangeMode">
+        <option value="day">День</option>
+        <option value="week">Неделя</option>
+        <option value="month">Месяц</option>
+      </select>
       </form>
       <div class="view-choice">
-        <p>Тут будет представление событий</p>
+        <div class="week-scroll">
+          <button @click="goToPreviousWeek">←</button>
+          <div class="week-days">
+            <div
+              v-for="(day, index) in weekDays"
+              :key="index"
+              :class="{ selected: selectedDay.toDateString() === day.toDateString() }"
+              @click="selectDay(day)"
+              class="day-item" >
+              {{ day.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric' }) }}
+            </div>
+          </div>
+          <button @click="goToNextWeek">→</button>
+        </div>
       </div>
     </div>
     <div class="views">
@@ -19,17 +32,250 @@
         <p>Пока друзей нет</p>
       </div>
       <div class="calendary">
-        <p>Заглушка</p>
-        <button type="button" id="add-event-button">
-          <img src="../assets/append-light-96.png" alt="Добавить" width="60" height="60"><!--icons/append-light-96.png-->
+        <div v-if="rangeMode === 'day'" class="day-schedule">
+          <div v-for="slot in timeSlots" :key="slot" class="time-slot">
+            <div class="slot-time">{{ slot }}</div>
+            <div class="slot-content">
+              <div
+                v-for="event in eventsForTimeSlot(slot)"
+                :key="event.id"
+                class="event">
+                {{ event.title }}
+              </div>
+            </div>
+          </div>
+          <button type="button" id="add-event-button">
+          <img src="../assets/append-light-96.png" alt="Добавить" width="60" height="60">
+          </button>
+        </div>
+
+        <div v-else-if="rangeMode === 'week'" class="week-schedule">
+          <div class="week-row">
+            <div v-for="(day, index) in weekDays" :key="index" class="day-column" 
+              @click="openModal(day.date)">
+              <div class="day-header">
+                {{ day.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric' }) }}
+              </div>
+              <div class="slots">
+                <div
+                  v-for="slot in timeSlots"
+                  :key="slot"
+                  class="time-slot">
+                  <div class="slot-time">{{ slot }}</div>
+                  <div class="slot-content">
+                    <div
+                      v-for="event in eventsForTimeSlot(slot)"
+                      :key="event.id"
+                      class="event">
+                      <!-- {{ event.title }} -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button type="button" id="add-event-button">
+            <img src="../assets/append-light-96.png" alt="Добавить" width="60" height="60">
+          </button>
+        </div>
+
+        <div v-else>
+        <Calendar />
+        <button type="button" id="add-event-button" >
+          <img src="../assets/append-light-96.png" alt="Добавить" width="60" height="60">
         </button>
+        <!-- <CalendarMonth :month="selectedMonth" :events="eventsForMonth" @day-click="openDayModal" /> -->
+        </div>
       </div>
     </div>
   </main>
   <footer>
     <p>Пока заглушка</p>
   </footer>
+
+    <!-- Модальное окно -->
+  <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
+     <div class="modal-content">
+      <h3>События на {{ selectedDateFormatted }}</h3>
+      <ul class="events-list">
+        <li v-if="events.length === 0">Нет событий</li>
+        <li v-for="(event, index) in events" :key="index">{{ event }}</li>
+      </ul>
+      <button class="add-btn" @click="addEvent">Добавить событие</button>
+      <button class="close-btn" @click="closeModal">Закрыть</button>
+    </div>
+  </div>
 </template>
+
+
+<script setup>
+// import { ref, computed } from 'vue'
+// import Calendar from '../components/Calendar.vue'
+
+// // Состояния
+// const today = new Date()
+// const selectedDay = ref(new Date())
+// const rangeMode = ref('day')
+// const showModal = ref(false)
+// const selectedDate = ref(null)
+
+// const events = ref([]) // Пока заглушка, позже будут реальные
+// const apiURL = 'http://localhost:5173/api/events' // или свой хост
+
+// // Массив дней недели
+// const startOfWeek = (date) => {
+//   const d = new Date(date)
+//   const day = d.getDay()
+//   const diff = d.getDate() - day + (day === 0 ? -6 : 1) // Понедельник
+//   return new Date(d.setDate(diff))
+// }
+
+// const currentWeekStart = ref(startOfWeek(today))
+
+// const weekDays = computed(() => {
+//   const start = new Date(currentWeekStart.value)
+//   return Array.from({ length: 7 }, (_, i) => {
+//     const date = new Date(start)
+//     date.setDate(start.getDate() + i)
+//     return date
+//   })
+// })
+
+// const selectedDateFormatted = computed(() => {
+//   return selectedDate.value
+//     ? selectedDate.value.toLocaleDateString('ru-RU')
+//     : ''
+// })
+
+// function selectDay(date) {
+//   selectedDay.value = new Date(date)
+// }
+
+// function goToPreviousWeek() {
+//   const newDate = new Date(currentWeekStart.value)
+//   newDate.setDate(newDate.getDate() - 7)
+//   currentWeekStart.value = newDate
+// }
+
+// function goToNextWeek() {
+//   const newDate = new Date(currentWeekStart.value)
+//   newDate.setDate(newDate.getDate() + 7)
+//   currentWeekStart.value = newDate
+// }
+
+// function openModal(date) {
+//   selectedDate.value = date
+//   events.value = ['Заглушка события 1', 'Заглушка события 2'] // потом будут реальные
+//   showModal.value = true
+// }
+
+// function closeModal() {
+//   showModal.value = false
+// }
+
+// function addEvent() {
+//   alert('Форма добавления события пока не реализована')
+// }
+
+// // Временные интервалы на день (пример: с 08:00 до 20:00)
+// const timeSlots = Array.from({ length: 13 }, (_, i) => {
+//   const hour = i + 8
+//   return `${hour.toString().padStart(2, '0')}:00`
+// })
+
+// // Заглушка: события
+// const mockEvents = [
+//   { time: '10:00', title: 'Встреча с командой' },
+//   { time: '13:00', title: 'Обед с другом' },
+//   { time: '17:00', title: 'Онлайн-семинар' },
+// ]
+import { ref, computed, onMounted } from 'vue'
+import Calendar from '../components/Calendar.vue'
+
+// Состояния
+const today = new Date()
+const selectedDay = ref(new Date())
+const rangeMode = ref('day')
+const showModal = ref(false)
+const selectedDate = ref(null)
+const timeSlots = Array.from({ length: 13 }, (_, i) => `${(i + 8).toString().padStart(2, '0')}:00`)
+
+const events = ref([]) // сюда будут реальные события
+const apiURL = 'http://localhost:5173/api/events' // или свой хост
+
+onMounted(async () => {
+  try {
+    const response = await fetch(apiURL)
+    const data = await response.json()
+    events.value = data
+  } catch (error) {
+    console.error('Ошибка загрузки событий:', error)
+  }
+})
+
+// Расчёт текущей недели
+const startOfWeek = (date) => {
+  const d = new Date(date)
+  const day = d.getDay()
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
+  return new Date(d.setDate(diff))
+}
+const currentWeekStart = ref(startOfWeek(today))
+
+const weekDays = computed(() => {
+  const start = new Date(currentWeekStart.value)
+  return Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(start)
+    date.setDate(start.getDate() + i)
+    return date
+  })
+})
+
+function goToPreviousWeek() {
+  const newDate = new Date(currentWeekStart.value)
+  newDate.setDate(newDate.getDate() - 7)
+  currentWeekStart.value = newDate
+}
+
+function goToNextWeek() {
+  const newDate = new Date(currentWeekStart.value)
+  newDate.setDate(newDate.getDate() + 7)
+  currentWeekStart.value = newDate
+}
+
+function selectDay(date) {
+  selectedDay.value = new Date(date)
+}
+
+const selectedDateFormatted = computed(() => {
+  return selectedDate.value
+    ? selectedDate.value.toLocaleDateString('ru-RU')
+    : ''
+})
+
+function openModal(date) {
+  selectedDate.value = date
+  showModal.value = true
+}
+
+function closeModal() {
+  showModal.value = false
+}
+
+function addEvent() {
+  alert('Форма добавления события пока не реализована')
+}
+
+// Отфильтрованные события на день
+function eventsForTimeSlot(slot, date) {
+  const day = date?.toDateString?.() || selectedDay.value.toDateString()
+  return events.value.filter(e => {
+    const eventDate = new Date(e.date_time)
+    return eventDate.toDateString() === day &&
+           eventDate.getHours() === parseInt(slot)
+  })
+}
+</script>
 
 
 <style scoped>
@@ -98,6 +344,7 @@ body {
     flex: 1;
     display: flex;
     flex-direction: row;
+    min-height: 70px;
     max-height: 70px;
 
     background-color: white;
@@ -127,7 +374,7 @@ body {
     box-shadow: 0 0 1px 1px rgba(0, 0, 0, 0.3);
 }
 
-#range-select {
+#range-mode-select {
     margin-top: 5px;
 }
 
@@ -161,16 +408,73 @@ body {
     box-shadow: 0 0 1px 1px rgba(0, 0, 0, 0.3);
 }
 
+.week-scroll {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.week-days {
+  display: flex;
+  gap: 0.5rem;
+  width: 481px;
+}
+
+.day-item {
+  padding: 4.8px 9.6px;
+  background-color: #eee;
+  border-radius: 5px;
+  cursor: pointer;
+  min-width: 20px;
+  max-width: 63.05px;
+}
+
+.day-item.selected {
+  background-color: #4caf50;
+  color: white;
+}
+
+.day-schedule {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  /* min-height: 100%; */
+}
+
+.time-slot {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 0.5rem;
+}
+
+.slot-time {
+  width: 60px;
+  font-weight: bold;
+}
+
+.slot-content {
+  flex: 1;
+  padding-left: 1rem;
+  min-height: 100%;
+}
+
+.event {
+  background-color: #dcedc8;
+  border-radius: 4px;
+  min-height: 100%;
+}
+
 #add-event-button {
-    position: absolute;
-    right: 50px;
-    top: 700px;
-    background: none;
-    border: none;
-    padding: 0;
-    margin: 0;
-    cursor: pointer;
-    outline: none;
+  position: absolute;
+  right: 50px;
+  top: 700px;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  outline: none;
+  /* opacity: 0.4; */
 }
 
 footer {
@@ -178,5 +482,88 @@ footer {
     padding-left: 20px;
 }
 
+.week-schedule {
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  min-height: 100%;
+  max-height: 100%;
+}
+
+.week-row {
+  display: flex;
+  justify-content: center;
+  min-width: 100%;
+  gap: 1rem;
+}
+
+.day-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #ccc;
+  min-width: 100px;
+  max-width: 160px;
+}
+
+.day-header {
+  background-color: #f5f5f5;
+  padding: 0.5rem;
+  font-weight: bold;
+  text-align: center;
+}
+
+.slots {
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  /* min-height: 100%;
+  max-height: 100%; */
+  flex-grow: 1;
+  justify-content: space-around;
+}
+
+/* Модальное окно */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.events-list {
+  margin: 1rem 0;
+}
+
+.add-btn,
+.close-btn {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  background-color: #2a7ae2;
+  color: white;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.close-btn {
+  background-color: #aaa;
+  margin-left: 0.5rem;
+}
 
 </style>
