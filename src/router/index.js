@@ -7,6 +7,8 @@ import ProfileView from '../views/ProfileView.vue'
 import AdminView from '../views/AdminView.vue'
 import LoginView from '../views/LoginView.vue'
 import { useAuthStore } from '../stores/authStore'
+import ChangePswdView from '../views/ChangePswdView.vue'
+import RegisterView from '../views/RegisterView.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: HomeView },
@@ -15,7 +17,9 @@ const routes = [
   { path: '/match', name: 'Match', component: MatchView, meta: { requiresAuth: true } },
   { path: '/messages', name: 'Messages', component: MessagesView, meta: { requiresAuth: true } },
   { path: '/profile', name: 'Profile', component: ProfileView, meta: { requiresAuth: true } },
-  { path: '/admin', name: 'Admin', component: AdminView, meta: { requiresAdmin: true } }
+  { path: '/admin', name: 'Admin', component: AdminView, meta: { requiresAdmin: true } },
+  { path: '/changePswd', name: 'ChangePswd', component: ChangePswdView },
+  { path: '/register', name: 'Register', component: RegisterView }
 ]
 
 const router = createRouter({
