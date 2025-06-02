@@ -36,13 +36,15 @@
           <div v-for="slot in timeSlots" :key="slot" class="time-slot">
             <div class="slot-time">{{ slot }}</div>
             <div class="slot-content">
-              <div
-                v-for="event in eventsForTimeSlot(slot)"
-                :key="event.id"
-                class="event">
-                {{ event.title }}
-              </div>
             </div>
+          </div>
+          <div
+            v-for="event in eventsForSelectedDay()"
+            :key="event.id"
+            class="event"
+            :style="getEventStyle(event)"
+            @click="openEventModal(event)">
+            {{ event.title }}
           </div>
           <button type="button" id="add-event-button">
           <img src="../assets/append-light-96.png" alt="Добавить" width="60" height="60">
@@ -63,13 +65,15 @@
                   class="time-slot">
                   <div class="slot-time">{{ slot }}</div>
                   <div class="slot-content">
-                    <div
-                      v-for="event in eventsForTimeSlot(slot)"
-                      :key="event.id"
-                      class="event">
-                      <!-- {{ event.title }} -->
-                    </div>
                   </div>
+                </div>
+                <div
+                  v-for="event in eventsForDay(day)"
+                  :key="event.id"
+                  class="event"
+                  :style="getEventStyle(event)"
+                  @click="openEventModal(event)">
+                  <!-- {{ event.title }} -->
                 </div>
               </div>
             </div>
@@ -105,90 +109,26 @@
       <button class="close-btn" @click="closeModal">Закрыть</button>
     </div>
   </div>
+
+  <div v-if="showEventModal" class="modal-overlay" @click.self="closeEventModal">
+  <div class="modal-content">
+    <h3>Событие: {{ selectedEvent?.title }}</h3>
+    <p><strong>Описание:</strong> {{ selectedEvent?.description || 'нет' }}</p>
+    <!-- <p><strong></strong> {{ selectedEvent?.description || 'нет' }}</p> -->
+    <p><strong>Время начала:</strong> {{ new Date(selectedEvent?.date_time).toLocaleString('ru-RU') }}</p>
+    <p><strong>Длительность:</strong> {{ selectedEvent?.duration_minutes }} минут</p>
+
+    <router-link :to="`/edit-event/${selectedEvent?.id}`">
+      <button class="edit-btn">Редактировать</button>
+    </router-link>
+    <button class="delete-btn" @click="deleteEvent(selectedEvent?.id)">Удалить</button>
+    <button class="close-btn" @click="closeEventModal">Закрыть</button>
+  </div>
+</div>
 </template>
 
 
 <script setup>
-// import { ref, computed } from 'vue'
-// import Calendar from '../components/Calendar.vue'
-
-// // Состояния
-// const today = new Date()
-// const selectedDay = ref(new Date())
-// const rangeMode = ref('day')
-// const showModal = ref(false)
-// const selectedDate = ref(null)
-
-// const events = ref([]) // Пока заглушка, позже будут реальные
-// const apiURL = 'http://localhost:5173/api/events' // или свой хост
-
-// // Массив дней недели
-// const startOfWeek = (date) => {
-//   const d = new Date(date)
-//   const day = d.getDay()
-//   const diff = d.getDate() - day + (day === 0 ? -6 : 1) // Понедельник
-//   return new Date(d.setDate(diff))
-// }
-
-// const currentWeekStart = ref(startOfWeek(today))
-
-// const weekDays = computed(() => {
-//   const start = new Date(currentWeekStart.value)
-//   return Array.from({ length: 7 }, (_, i) => {
-//     const date = new Date(start)
-//     date.setDate(start.getDate() + i)
-//     return date
-//   })
-// })
-
-// const selectedDateFormatted = computed(() => {
-//   return selectedDate.value
-//     ? selectedDate.value.toLocaleDateString('ru-RU')
-//     : ''
-// })
-
-// function selectDay(date) {
-//   selectedDay.value = new Date(date)
-// }
-
-// function goToPreviousWeek() {
-//   const newDate = new Date(currentWeekStart.value)
-//   newDate.setDate(newDate.getDate() - 7)
-//   currentWeekStart.value = newDate
-// }
-
-// function goToNextWeek() {
-//   const newDate = new Date(currentWeekStart.value)
-//   newDate.setDate(newDate.getDate() + 7)
-//   currentWeekStart.value = newDate
-// }
-
-// function openModal(date) {
-//   selectedDate.value = date
-//   events.value = ['Заглушка события 1', 'Заглушка события 2'] // потом будут реальные
-//   showModal.value = true
-// }
-
-// function closeModal() {
-//   showModal.value = false
-// }
-
-// function addEvent() {
-//   alert('Форма добавления события пока не реализована')
-// }
-
-// // Временные интервалы на день (пример: с 08:00 до 20:00)
-// const timeSlots = Array.from({ length: 13 }, (_, i) => {
-//   const hour = i + 8
-//   return `${hour.toString().padStart(2, '0')}:00`
-// })
-
-// // Заглушка: события
-// const mockEvents = [
-//   { time: '10:00', title: 'Встреча с командой' },
-//   { time: '13:00', title: 'Обед с другом' },
-//   { time: '17:00', title: 'Онлайн-семинар' },
-// ]
 import { ref, computed, onMounted } from 'vue'
 import Calendar from '../components/Calendar.vue'
 
@@ -197,8 +137,10 @@ const today = new Date()
 const selectedDay = ref(new Date())
 const rangeMode = ref('day')
 const showModal = ref(false)
+const showEventModal = ref(false)
 const selectedDate = ref(null)
-const timeSlots = Array.from({ length: 13 }, (_, i) => `${(i + 8).toString().padStart(2, '0')}:00`)
+const selectedEvent = ref(null)
+const timeSlots = Array.from({ length: 17 }, (_, i) => `${(i + 8).toString().padStart(2, '0')}:00`)
 
 const events = ref([]) // сюда будут реальные события
 const apiURL = 'http://localhost:5173/api/events' // или свой хост
@@ -262,19 +204,64 @@ function closeModal() {
   showModal.value = false
 }
 
+function openEventModal(event) {
+  selectedEvent.value = event
+  showEventModal.value = true
+}
+
+function closeEventModal() {
+  showEventModal.value = false
+}
+
 function addEvent() {
   alert('Форма добавления события пока не реализована')
 }
 
-// Отфильтрованные события на день
-function eventsForTimeSlot(slot, date) {
-  const day = date?.toDateString?.() || selectedDay.value.toDateString()
+async function deleteEvent(id) {
+  if (!confirm('Удалить это событие?')) return
+  try {
+    await fetch(`http://localhost:5173/api/events/${id}`, { method: 'DELETE' })
+    events.value = events.value.filter(e => e.id !== id)
+    closeModal()
+  } catch (err) {
+    console.error('Ошибка удаления:', err)
+  }
+}
+
+
+function eventsForSelectedDay() {
+  const day = selectedDay.value.toDateString()
   return events.value.filter(e => {
     const eventDate = new Date(e.date_time)
-    return eventDate.toDateString() === day &&
-           eventDate.getHours() === parseInt(slot)
+    return eventDate.toDateString() === day
   })
 }
+
+function eventsForDay(day) {
+  const dayString = new Date(day).toDateString()
+  return events.value.filter(e => {
+    const eventDate = new Date(e.date_time)
+    return eventDate.toDateString() === dayString
+  })
+}
+
+// высота одного временного слота (например, 50px)
+const SLOT_HEIGHT = 50
+
+function getEventStyle(event) {
+  const start = new Date(event.date_time)
+  const startHour = start.getHours()
+  const startMinutes = start.getMinutes()
+
+  const topOffset = ((startHour - 8) + startMinutes / 60) * SLOT_HEIGHT
+  const height = (event.duration_minutes / 60) * SLOT_HEIGHT
+
+  return {
+    top: `${topOffset}px`,
+    height: `${height}px`
+  }
+}
+
 </script>
 
 
@@ -454,14 +441,21 @@ body {
 
 .slot-content {
   flex: 1;
+  position: relative;
+  height: 50px; /* каждый час — 50px высоты */
   padding-left: 1rem;
-  min-height: 100%;
+  /* min-height: 100%; */
 }
 
 .event {
+  position: absolute;
+  left: 0;
+  right: 0;
+  padding: 4px;
   background-color: #dcedc8;
   border-radius: 4px;
-  min-height: 100%;
+  z-index: 1;
+  /* min-height: 100%; */
 }
 
 #add-event-button {

@@ -3,8 +3,6 @@ from sqlalchemy.dialects.postgresql import ENUM
 from datetime import datetime
 from extensions import db
 
-db = SQLAlchemy()
-
 # ENUM-типы
 privacy_setting = ENUM('all', 'none', name='privacy_setting', create_type=False)
 user_role = ENUM('user', 'admin', name='user_role', create_type=False)
