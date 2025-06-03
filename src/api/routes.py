@@ -7,6 +7,8 @@ from api.auth import UserRegister, UserLogin, UserLogout, CheckAuth
 from api.user import UserProfile, ChangePassword, DeleteAccount, UserSearch
 from api.admin import AdminUserList, AdminUserActions, DeleteAccount
 from api.friends import FriendRequest, FriendResponse, FriendList, FriendDetail, RemoveFriend
+from api.events_drafts import EventDraftCreate, VoteForDraft, FinalizeDraft
+
 api_bp = Blueprint('api', __name__)
 api = Api(api_bp)
 
@@ -48,3 +50,7 @@ api.add_resource(FriendResponse, '/friends/request/<int:request_id>')
 api.add_resource(FriendList, '/friends')
 api.add_resource(FriendDetail, '/friends/<int:friend_id>')
 api.add_resource(RemoveFriend, '/friends/<int:friend_id>/remove')
+
+api.add_resource(EventDraftCreate, '/events_drafts/create')
+api.add_resource(VoteForDraft, '/events_drafts/vote/<int:event_draft_id>')
+api.add_resource(FinalizeDraft, '/events_drafts/finale/<int:event_draft_id>')
