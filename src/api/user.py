@@ -8,7 +8,7 @@ from models.models import User
 class UserProfile(Resource):
     @jwt_required()
     def get(self):
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         user = db.session.get(User, user_id)
         
         return {
@@ -22,7 +22,7 @@ class UserProfile(Resource):
 
     @jwt_required()
     def put(self):
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         user = db.session.get(User, user_id)
         data = request.get_json()
         
@@ -47,7 +47,7 @@ class UserProfile(Resource):
 class ChangePassword(Resource):
     @jwt_required()
     def post(self):
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         user = db.session.get(User, user_id)
         data = request.get_json()
         
@@ -65,7 +65,7 @@ class ChangePassword(Resource):
 class DeleteAccount(Resource):
     @jwt_required()
     def delete(self):
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         user = db.session.get(User, user_id)
         
         db.session.delete(user)

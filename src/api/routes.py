@@ -5,7 +5,7 @@ from api.notifications import UserNotifications, UserInvitationNotifications, Us
 from api.groups import GroupCreate, GroupJoin, GroupLeave, GroupDelete, GroupEdit, GroupInvite, UserGroups, GroupDetail
 from api.auth import UserRegister, UserLogin, UserLogout, CheckAuth
 from api.user import UserProfile, ChangePassword, DeleteAccount, UserSearch
-from api.admin import AdminUserList, AdminUserActions, DeleteAccount
+from api.admin import AdminUserList, AdminUserActions
 from api.friends import FriendRequest, FriendResponse, FriendList, FriendDetail, RemoveFriend
 from api.events_drafts import EventDraftCreate, VoteForDraft, FinalizeDraft
 

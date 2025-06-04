@@ -6,7 +6,7 @@ from flask import request
 from extensions import db
 
 # Отправка запроса на дружбу
-class FriendRequest(Resource):
+class FriendRequest(Resource): 
     @jwt_required()
     def post(self):
         data = request.get_json()
@@ -15,7 +15,7 @@ class FriendRequest(Resource):
         if not receiver_id:
             return {"error": "Не указан пользователь"}, 400
             
-        if receiver_id == get_jwt_identity():
+        if receiver_id == int(get_jwt_identity()):
             return {"error": "Нельзя добавить себя в друзья"}, 400
             
         receiver = db.session.get(User, receiver_id)
@@ -24,8 +24,8 @@ class FriendRequest(Resource):
             
         # Проверяем существующую заявку
         existing_request = Friend.query.filter(
-            ((Friend.sender_id == get_jwt_identity()) & (Friend.receiver_id == receiver_id)) |
-            ((Friend.sender_id == receiver_id) & (Friend.receiver_id == get_jwt_identity()))
+            ((Friend.sender_id == int(get_jwt_identity())) & (Friend.receiver_id == receiver_id)) |
+            ((Friend.sender_id == receiver_id) & (Friend.receiver_id == int(get_jwt_identity())))
         ).first()
         
         if existing_request:
@@ -36,7 +36,7 @@ class FriendRequest(Resource):
 
         # Создаем новую заявку
         friend_request = Friend(
-            sender_id=get_jwt_identity(),
+            sender_id=int(get_jwt_identity()),
             receiver_id=receiver_id,
             status='pending'
         )
@@ -62,7 +62,7 @@ class FriendResponse(Resource):
         if not friend_request:
             return {"error": "Запрос не найден"}, 404
             
-        if friend_request.receiver_id != get_jwt_identity():
+        if friend_request.receiver_id != int(get_jwt_identity()):
             return {"error": "Вы не можете ответить на этот запрос"}, 403
             
         if friend_request.status != 'pending':
@@ -90,7 +90,7 @@ class FriendResponse(Resource):
 class FriendList(Resource):
     @jwt_required()
     def get(self):
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         
         # Получаем все связанные записи
         friends = Friend.query.filter(
@@ -136,7 +136,7 @@ class FriendList(Resource):
 class FriendDetail(Resource):
     @jwt_required()
     def get(self, friend_id):
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         
         # Проверяем дружеские отношения
         friendship = Friend.query.filter(
@@ -163,7 +163,7 @@ class FriendDetail(Resource):
 class RemoveFriend(Resource):
     @jwt_required()
     def delete(self, friend_id):
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         
         friendship = Friend.query.filter(
             ((Friend.sender_id == user_id) & (Friend.receiver_id == friend_id)) |

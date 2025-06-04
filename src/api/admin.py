@@ -8,7 +8,7 @@ from functools import wraps
 def admin_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         user = db.session.get(User, user_id)
         if not user or user.role != 'admin':
             return {"error": "Требуются права администратора"}, 403

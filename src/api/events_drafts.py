@@ -19,7 +19,7 @@ class EventDraftCreate(Resource):
         # Проверка членства в группе
         membership = GroupMember.query.filter_by(
             group_id=data['group_id'],
-            user_id=get_jwt_identity()
+            user_id=int(get_jwt_identity())
         ).first()
         if not membership:
             return {"error": "Вы не состоите в этой группе"}, 403
@@ -29,7 +29,7 @@ class EventDraftCreate(Resource):
             title=data['title'],
             description=data.get('description', ''),
             group_id=data['group_id'],
-            created_by=get_jwt_identity(),
+            created_by=int(get_jwt_identity()),
             date_time=datetime.fromisoformat(data['date_time']),
             status='voting'
         )
@@ -39,7 +39,7 @@ class EventDraftCreate(Resource):
         # Автоматическое согласие создателя
         db.session.add(EventConsent(
             event_draft_id=new_draft.id,
-            user_id=get_jwt_identity(),
+            user_id=int(get_jwt_identity()),
             consent=True
         ))
         
@@ -69,20 +69,20 @@ class VoteForDraft(Resource):
         
         consent = EventConsent.query.filter_by(
             event_draft_id=draft_id,
-            user_id=get_jwt_identity()
+            user_id=int(get_jwt_identity())
         ).first()
         
         if not consent:
             # Проверяем, что пользователь действительно участник группы
             if not GroupMember.query.filter_by(
                 group_id=draft.group_id,
-                user_id=get_jwt_identity()
+                user_id=int(get_jwt_identity())
             ).first():
                 return {"error": "Вы не участник группы"}, 403
                 
             consent = EventConsent(
                 event_draft_id=draft_id,
-                user_id=get_jwt_identity(),
+                user_id=int(get_jwt_identity()),
                 consent=data['consent']
             )
             db.session.add(consent)
@@ -100,14 +100,14 @@ class VoteForDraft(Resource):
             # Удаляем старые слоты
             AvailabilitySlot.query.filter_by(
                 event_draft_id=draft_id,
-                user_id=get_jwt_identity()
+                user_id=int(get_jwt_identity())
             ).delete()
             
             # Добавляем новые
             for slot in data['slots']:
                 db.session.add(AvailabilitySlot(
                     event_draft_id=draft_id,
-                    user_id=get_jwt_identity(),
+                    user_id=int(get_jwt_identity()),
                     start_time=datetime.fromisoformat(slot['start']),
                     end_time=datetime.fromisoformat(slot['end'])
                 ))

@@ -3,6 +3,7 @@ from extensions import db
 from flask_restful import Resource
 from datetime import datetime, date
 from flask_login import current_user, login_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from api.notifications import notify_event_participants
 from models.models import Event, EventParticipant, User, Friend
 
@@ -10,19 +11,19 @@ from models.models import Event, EventParticipant, User, Friend
 
 # Запрос своих событий или событий друга по дням/неделям/месяцам 
 class UserEvents(Resource):
-    @login_required
+    @jwt_required()
     def get(self):
         # 1. Определяем пользователя, чьи события надо получить
         user_id = request.args.get("user_id", type=int)
 
         if user_id is None:
-            user_id = current_user.id  # свои события
+            user_id = int(get_jwt_identity())  # свои события
         else:
-            if user_id != current_user.id:
+            if user_id != int(get_jwt_identity()):
                 # Проверка, является ли запрошенный пользователь другом
                 friend = db.session.query(Friend).filter(
-                    ((Friend.sender_id == current_user.id) & (Friend.receiver_id == user_id) |
-                     (Friend.sender_id == user_id) & (Friend.receiver_id == current_user.id)) &
+                    ((Friend.sender_id == int(get_jwt_identity())) & (Friend.receiver_id == user_id) |
+                    (Friend.sender_id == user_id) & (Friend.receiver_id == int(get_jwt_identity()))) &
                     (Friend.status == 'accepted')
                 ).first()
 
@@ -84,19 +85,21 @@ class UserEvents(Resource):
 
 # Запрос конкретного события 
 class EventDetail(Resource):
-    @login_required
+    @jwt_required()
     def get(self, event_id):
         event = db.session.get(Event, event_id)
+        user = db.session.get(User, int(get_jwt_identity()))
+
         if not event:
             return {"error": "Событие не найдено"}, 404
 
         # Проверка участия пользователя
         is_participant = db.session.query(EventParticipant).filter_by(
             event_id=event_id,
-            user_id=current_user.id
+            user_id=int(get_jwt_identity())
         ).first()
 
-        if not is_participant and current_user.role != 'admin':
+        if not is_participant and user.role != 'admin':
             return {"error": "Вы не являетесь участником этого события"}, 403
 
         return [{
@@ -117,9 +120,11 @@ class EventDetail(Resource):
 
 # Для Администраторов запрос всех событий
 class AllEvents(Resource):
-    @login_required
+    @jwt_required()
     def get(self):
-        if current_user.role != 'admin':
+        user = db.session.get(User, int(get_jwt_identity()))
+
+        if user.role != 'admin':
             return {"error": "Доступ запрещён. Только для администраторов."}, 403
 
         events = Event.query.all()
@@ -135,14 +140,16 @@ class AllEvents(Resource):
 #--------------------------PUT/DELETE_методы---------------------------
 
 class EventEditor(Resource):
-    @login_required
+    @jwt_required()
     def put(self, event_id):
         event = db.session.get(Event, event_id)
+        user = db.session.get(User, int(get_jwt_identity()))
+
         if not event:
             return {"error": "Событие не найдено"}, 404
 
         # Проверка, можно ли редактировать (создатель или админ)
-        if current_user.id != event.created_by and current_user.role != 'admin':
+        if user.id != event.created_by and user.role != 'admin':
             return {"error": "Недостаточно прав для редактирования"}, 403
 
         data = request.get_json()
@@ -161,14 +168,16 @@ class EventEditor(Resource):
         db.session.commit()
         return {"message": "Событие обновлено успешно"}
 
-    @login_required
+    @jwt_required()
     def delete(self, event_id):
         event = db.session.get(Event, event_id)
+        user = db.session.get(User, int(get_jwt_identity()))
+
         if not event:
             return {"error": "Событие не найдено"}, 404
 
         # Проверка, можно ли удалять (создатель или админ)
-        if current_user.id != event.created_by and current_user.role != 'admin':
+        if user.id != event.created_by and user.role != 'admin':
             return {"error": "Недостаточно прав для удаления"}, 403
 
         # Оповещение остальным пользователям об изменении
@@ -182,7 +191,7 @@ class EventEditor(Resource):
 #--------------------------POST_методы---------------------------
 
 class EventCreate(Resource):
-    @login_required
+    @jwt_required()
     def post(self):
         data = request.json
         new_event = Event(
@@ -190,14 +199,14 @@ class EventCreate(Resource):
             description=data.get("description", ""),
             date_time=datetime.fromisoformat(data["date_time"]),
             duration_minutes=data.get("duration_minutes", 60),
-            status=data.get("status", "scheduled"),
-            created_by=current_user.id
+            status=data.get("status", "active"),
+            created_by=int(get_jwt_identity())
         )
         db.session.add(new_event)
         db.session.commit()
 
         # Добавить текущего пользователя как участника
-        participant = EventParticipant(user_id=current_user.id, event_id=new_event.id)
+        participant = EventParticipant(user_id=int(get_jwt_identity()), event_id=new_event.id)
         db.session.add(participant)
         db.session.commit()
 

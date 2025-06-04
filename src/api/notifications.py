@@ -1,4 +1,5 @@
 from models.models import Notification, EventParticipant, User, Group, GroupMember, Event, EventDraft
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_login import current_user, login_required
 from flask import current_app, request
 from flask_restful import Resource
@@ -28,18 +29,20 @@ def create_notification(receiver_id, message, type, sender_id='system',
             recipients=[user.email],
             body=message
         )
-        mail.send(msg)
+        mail.send(msg) # либо закоментить либо исправлять, подробности в app.py
     
     db.session.commit()
 
 # 1. Уведомление о заявке в друзья
 def notify_friend_request(receiver_id):
-    message = f"Пользователь {current_user.name} отправил вам заявку в друзья."
+    user = db.session.get(User, int(get_jwt_identity()))
+
+    message = f"Пользователь {user.name} отправил вам заявку в друзья."
     create_notification(
         receiver_id=receiver_id,
         message=message,
         type='invitation',
-        sender_id=current_user.id
+        sender_id=int(get_jwt_identity())
     )
 
 def notify_friend_request_response(friend_request, accepted):
@@ -95,7 +98,7 @@ def notify_added_to_event(event_id, user_id):
         receiver_id=user_id,
         message=message,
         type='invitation',
-        sender_id=current_user.id,
+        sender_id=int(get_jwt_identity()),
         event_id=event_id,
         group_id=event.group_id
     )
@@ -111,7 +114,7 @@ def notify_event_draft_created(event_draft_id):
     message = f"В группе '{group.name}' создан новый черновик события '{event_draft.title}'. Пожалуйста, укажите вашу доступность."
     
     for member in members:
-        if member.user_id != current_user.id:  # Не уведомляем создателя
+        if member.user_id != int(get_jwt_identity()):  # Не уведомляем создателя
             create_notification(
                 receiver_id=member.user_id,
                 message=message,
@@ -168,7 +171,7 @@ def notify_event_draft_failed(event_draft_id, reason=""):
 def notify_event_participants(event, message, type):
     participants = EventParticipant.query.filter_by(event_id=event.id).all()
     for p in participants:
-        if p.user_id != current_user.id:
+        if p.user_id != int(get_jwt_identity()):
             create_notification(
                 receiver_id=p.user_id,
                 message=message,
@@ -181,9 +184,9 @@ def notify_event_participants(event, message, type):
 #----------------GET_методы---------------------------
 
 class UserNotifications(Resource):
-    @login_required
+    @jwt_required()
     def get(self):
-        notifications = Notification.query.filter_by(receiver_id=current_user.id).order_by(Notification.created_at.desc()).all()
+        notifications = Notification.query.filter_by(receiver_id=int(get_jwt_identity())).order_by(Notification.created_at.desc()).all()
         
         return [{
             "id": n.id,
@@ -199,10 +202,10 @@ class UserNotifications(Resource):
         } for n in notifications]
 
 class UserInvitationNotifications(Resource):
-    @login_required
+    @jwt_required()
     def get(self):
         notifications = Notification.query.filter(
-            Notification.receiver_id == current_user.id,
+            Notification.receiver_id == int(get_jwt_identity()),
             Notification.type == 'invitation'
         ).order_by(Notification.created_at.desc()).all()
         
@@ -218,10 +221,10 @@ class UserInvitationNotifications(Resource):
         } for n in notifications]
 
 class UserGeneralNotifications(Resource):
-    @login_required
+    @jwt_required()
     def get(self):
         notifications = Notification.query.filter(
-            Notification.receiver_id == current_user.id,
+            Notification.receiver_id == int(get_jwt_identity()),
             Notification.type != 'invitation'
         ).order_by(Notification.created_at.desc()).all()
         
@@ -240,12 +243,12 @@ class UserGeneralNotifications(Resource):
 
 #---------------POST_метод---------------------------------------
 class MarkNotificationAsRead(Resource):
-    @login_required
+    @jwt_required()
     def post(self, notification_id):
         # Получаем уведомление с проверкой владельца
         notification = Notification.query.filter(
             Notification.id == notification_id,
-            Notification.receiver_id == current_user.id
+            Notification.receiver_id == int(get_jwt_identity())
         ).first()
 
         if not notification:

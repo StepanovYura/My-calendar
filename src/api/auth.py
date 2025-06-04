@@ -33,7 +33,7 @@ class UserRegister(Resource):
         
         # Генерация токена
         token = create_access_token(
-            identity=user.id,
+            identity=str(user.id),
             expires_delta=timedelta(days=30)
         )
         
@@ -56,7 +56,7 @@ class UserLogin(Resource):
             return {"error": "Неверный email или пароль"}, 401
             
         token = create_access_token(
-            identity=user.id,
+            identity=str(user.id),
             expires_delta=timedelta(days=30)
         )
 
@@ -72,7 +72,7 @@ class UserLogout(Resource):
     @jwt_required()
     def post(self):
         # В реальном приложении нужно добавить токен в blacklist
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         active_sessions[user_id] = False
 
         return {"message": "Успешный выход из системы"}
@@ -80,7 +80,7 @@ class UserLogout(Resource):
 class CheckAuth(Resource):
     @jwt_required()
     def get(self):
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         user = db.session.get(User, user_id)
         
         return {

@@ -115,7 +115,7 @@ class Event(db.Model):
     __tablename__ = 'event'
 
     id = db.Column(db.Integer, primary_key=True)
-    group_id = db.Column(db.Integer, db.ForeignKey('group.id', ondelete='CASCADE'), nullable=False)
+    group_id = db.Column(db.Integer, db.ForeignKey('group.id', ondelete='CASCADE'), nullable=True)
     event_draft_id = db.Column(db.Integer, db.ForeignKey('eventdraft.id', ondelete='SET NULL'))
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text)
