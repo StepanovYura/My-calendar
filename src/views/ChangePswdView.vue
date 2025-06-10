@@ -66,7 +66,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
 
 const router = useRouter()
-const auth = useAuthStore()
+const authStore = useAuthStore()
 const showOldPassword = ref(false)
 const showNewPassword = ref(false)
 const showConfirmPassword = ref(false)
@@ -78,18 +78,24 @@ const form = ref({
   confirmPassword: ''
 })
 
-function handlePasswordChange() {
+async function handlePasswordChange() {
   if (form.value.newPassword !== form.value.confirmPassword) {
-    alert('Пароли не совпадают!')
+    alert('Новые пароли не совпадают!')
     return
   }
   
-  auth.changePassword({ 
+  const success = await authStore.changePassword({
     email: form.value.email,
     oldPassword: form.value.oldPassword,
     newPassword: form.value.newPassword
   })
-  router.push('/login')
+  
+  if (success) {
+    alert('Пароль успешно изменён')
+    router.push('/login')
+  } else {
+    alert(authStore.error || 'Ошибка смены пароля')
+  }
 }
 </script>
 

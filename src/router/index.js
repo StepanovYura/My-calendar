@@ -27,16 +27,19 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach((to, from, next) => {
-  const auth = useAuthStore()
-
-  if (to.meta.requiresAuth && !auth.isAuthenticated) {
+export async function authGuard(to, from, next) {
+  const authStore = useAuthStore()
+  const isAuthenticated = await authStore.checkAuth()
+  
+  if (to.meta.requiresAuth && !isAuthenticated) {
     next('/login')
-  } else if (to.meta.requiresAdmin && !auth.isAdmin) {
-    next('/login')
+  } else if (to.meta.requiresGuest && isAuthenticated) {
+    next('/')
   } else {
     next()
   }
-})
+}
+
+router.beforeEach(authGuard)
 
 export default router

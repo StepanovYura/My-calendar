@@ -1,6 +1,6 @@
 import { handleResponse } from './utils';
 
-const API_BASE = '/api/events';
+const API_BASE = 'http://127.0.0.1:5000/api/events';
 
 /**
  * Получение событий пользователя (по дню, неделе, месяцу, с возможностью указать user_id)
@@ -8,7 +8,7 @@ const API_BASE = '/api/events';
  */
 export function getUserEvents(token, filters = {}) {
   const url = new URL(`${API_BASE}/user`, window.location.origin);
-
+  console.log('URL: ', url);
   // Добавляем фильтры в URL (date, week_start, week_end, month_start, month_end, user_id)
   Object.entries(filters).forEach(([key, val]) => {
     if (val) url.searchParams.append(key, val);
@@ -17,7 +17,8 @@ export function getUserEvents(token, filters = {}) {
   return fetch(url.toString(), {
     method: 'GET',
     headers: {
-      Authorization: `Bearer ${token}`,
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json',
     },
   }).then(handleResponse);
 }
@@ -28,10 +29,11 @@ export function getUserEvents(token, filters = {}) {
  * @param {number} eventId - ID события
  */
 export function getEventDetail(token, eventId) {
-  return fetch(`${API_BASE}/detail/${eventId}`, {
+  return fetch(`${API_BASE}/${eventId}`, {
     method: 'GET',
     headers: {
-      Authorization: `Bearer ${token}`,
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json',
     },
   }).then(handleResponse);
 }
@@ -44,7 +46,8 @@ export function getAllEvents(token) {
   return fetch(`${API_BASE}/all`, {
     method: 'GET',
     headers: {
-      Authorization: `Bearer ${token}`,
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json',
     },
   }).then(handleResponse);
 }
@@ -59,7 +62,7 @@ export function createEvent(token, eventData) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
+      'Authorization': `Bearer ${token}`,
     },
     body: JSON.stringify(eventData),
   }).then(handleResponse);
@@ -72,11 +75,11 @@ export function createEvent(token, eventData) {
  * @param {Object} updatedData - { title, description, date_time, duration_minutes }
  */
 export function updateEvent(token, eventId, updatedData) {
-  return fetch(`${API_BASE}/edit/${eventId}`, {
+  return fetch(`${API_BASE}/${eventId}/edit`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
+      'Authorization': `Bearer ${token}`,
     },
     body: JSON.stringify(updatedData),
   }).then(handleResponse);
@@ -88,10 +91,10 @@ export function updateEvent(token, eventId, updatedData) {
  * @param {number} eventId - ID события
  */
 export function deleteEvent(token, eventId) {
-  return fetch(`${API_BASE}/edit/${eventId}`, {
+  return fetch(`${API_BASE}/${eventId}/edit`, {
     method: 'DELETE',
     headers: {
-      Authorization: `Bearer ${token}`,
+      'Authorization': `Bearer ${token}`,
     },
   }).then(handleResponse);
 }

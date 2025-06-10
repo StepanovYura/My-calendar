@@ -1,11 +1,11 @@
 import { handleResponse } from './utils';
 
-const API_BASE = '/api/user';
+const API_BASE = 'http://127.0.0.1:5000/api/user';
 
 /**
  * Получить свой профиль
  */
-export function fetchUserProfile(token) {
+export function fetchUserProfile(token) { // ВОЗМОЖНО ПОНАДОБИТСЯ ПРОПИСАТЬ МЕТОД GET
   return fetch(`${API_BASE}/profile`, {
     headers: {
       Authorization: `Bearer ${token}`

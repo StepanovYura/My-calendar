@@ -1,5 +1,7 @@
 <template>
-  <div class="notification"></div>
+  <div class="notification" v-if="showNotification" :class="notificationType">
+    {{ notificationMessage }}
+  </div>
   <main class="container">
     <div class="holder-choice">
       <form id="choice">
@@ -29,7 +31,17 @@
     <div class="views">
       <div class="choice-friend">
         <p>Фильтр по друзьям</p>
-        <p>Пока друзей нет</p>
+        <div v-if="eventsStore.hasFriends">
+          <div
+            v-for="friend in eventsStore.friends"
+            :key="friend.id"
+            class="friend-item"
+            :class="{ selected: eventsStore.selectedFriend?.id === friend.id }"
+            @click="eventsStore.selectFriend(friend)">
+            {{ friend.name }}
+          </div>
+        </div>
+        <p v-else>Пока друзей нет</p>
       </div>
       <div class="calendary">
         <div v-if="rangeMode === 'day'" class="day-schedule">
@@ -42,7 +54,8 @@
             v-for="event in eventsForSelectedDay()"
             :key="event.id"
             class="event"
-            :style="getEventStyle(event)"
+            :class="{ friend: event._isFriend }"
+            :style="getEventStyle(event, event._isFriend)"
             @click="openEventModal(event)">
             {{ event.title }}
           </div>
@@ -68,10 +81,11 @@
                   </div>
                 </div>
                 <div
-                  v-for="event in eventsForDay(day)"
+                  v-for="event in weekEventsForDay(day)"
                   :key="event.id"
                   class="event"
-                  :style="getEventStyle(event)"
+                  :class="{ friend: event._isFriend }"
+                  :style="getEventStyle(event, event._isFriend)"
                   @click="openEventModal(event)">
                   <!-- {{ event.title }} -->
                 </div>
@@ -102,8 +116,8 @@
      <div class="modal-content">
       <h3>События на {{ selectedDateFormatted }}</h3>
       <ul class="events-list">
-        <li v-if="events.length === 0">Нет событий</li>
-        <li v-for="(event, index) in events" :key="index">{{ event }}</li>
+        <li v-if="eventsForSelectedDay.length === 0">Нет событий</li>
+        <li v-else v-for="(event, index) in eventsForSelectedDay" :key="index">{{ event.title }}</li>
       </ul>
       <button class="add-btn" @click="addEvent">Добавить событие</button>
       <button class="close-btn" @click="closeModal">Закрыть</button>
@@ -114,7 +128,6 @@
   <div class="modal-content">
     <h3>Событие: {{ selectedEvent?.title }}</h3>
     <p><strong>Описание:</strong> {{ selectedEvent?.description || 'нет' }}</p>
-    <!-- <p><strong></strong> {{ selectedEvent?.description || 'нет' }}</p> -->
     <p><strong>Время начала:</strong> {{ new Date(selectedEvent?.date_time).toLocaleString('ru-RU') }}</p>
     <p><strong>Длительность:</strong> {{ selectedEvent?.duration_minutes }} минут</p>
 
@@ -127,12 +140,17 @@
 </div>
 </template>
 
-
+<!-- МОДАЛЬНОЕ ОКНО НЕ РАБОТАЕТ, ПРИЛОЖЕНИЕ СРАЗУ ЗАВИСАЕТ, АВТОРИЗАЦИЯ РЕГИСТРАЦИЯ И ТД ТОЖЕ -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useEventsStore } from '../stores/eventsStore'
+import { useAuthStore } from '../stores/authStore'
 import Calendar from '../components/Calendar.vue'
 
-// Состояния
+
+const eventsStore = useEventsStore()
+const authStore = useAuthStore()
+
 const today = new Date()
 const selectedDay = ref(new Date())
 const rangeMode = ref('day')
@@ -142,18 +160,22 @@ const selectedDate = ref(null)
 const selectedEvent = ref(null)
 const timeSlots = Array.from({ length: 17 }, (_, i) => `${(i + 8).toString().padStart(2, '0')}:00`)
 
-const events = ref([]) // сюда будут реальные события
-const apiURL = 'http://localhost:5173/api/events' // или свой хост
+const notificationMessage = ref('')
+const notificationType = ref('') // 'error' | 'success' | 'info'
+const showNotification = ref(false)
 
-onMounted(async () => {
-  try {
-    const response = await fetch(apiURL)
-    const data = await response.json()
-    events.value = data
-  } catch (error) {
-    console.error('Ошибка загрузки событий:', error)
-  }
-})
+// Уведомления
+function showNotify(message, type = 'info', duration = 3000) {
+  notificationMessage.value = message
+  notificationType.value = type
+  showNotification.value = true
+
+  setTimeout(() => {
+    showNotification.value = false
+    notificationMessage.value = ''
+    notificationType.value = ''
+  }, duration)
+}
 
 // Расчёт текущей недели
 const startOfWeek = (date) => {
@@ -220,35 +242,31 @@ function addEvent() {
 async function deleteEvent(id) {
   if (!confirm('Удалить это событие?')) return
   try {
-    await fetch(`http://localhost:5173/api/events/${id}`, { method: 'DELETE' })
-    events.value = events.value.filter(e => e.id !== id)
-    closeModal()
+    await eventsStore.deleteEvent(id)
+    closeEventModal()
   } catch (err) {
-    console.error('Ошибка удаления:', err)
+    showNotify(err.message, 'error')
+    closeEventModal()
   }
 }
 
-
+// Получение событий на выбранный день
 function eventsForSelectedDay() {
-  const day = selectedDay.value.toDateString()
-  return events.value.filter(e => {
-    const eventDate = new Date(e.date_time)
-    return eventDate.toDateString() === day
-  })
+  const events = eventsStore.eventsForDay(selectedDay.value);
+  console.log('События для дня 2:', selectedDay.value, events);
+  return events;
+  // return eventsStore.eventsForDay(selectedDay.value)
 }
 
-function eventsForDay(day) {
-  const dayString = new Date(day).toDateString()
-  return events.value.filter(e => {
-    const eventDate = new Date(e.date_time)
-    return eventDate.toDateString() === dayString
-  })
+// Получение событий на конкретный день (используется в режиме недели)
+function weekEventsForDay(day) {
+  return eventsStore.eventsForDay(day)
 }
 
 // высота одного временного слота (например, 50px)
 const SLOT_HEIGHT = 50
 
-function getEventStyle(event) {
+function getEventStyle(event, isFriend = false) {
   const start = new Date(event.date_time)
   const startHour = start.getHours()
   const startMinutes = start.getMinutes()
@@ -256,12 +274,24 @@ function getEventStyle(event) {
   const topOffset = ((startHour - 8) + startMinutes / 60) * SLOT_HEIGHT
   const height = (event.duration_minutes / 60) * SLOT_HEIGHT
 
+  // Если фильтр по другу включён — делим пространство пополам
+  const width = eventsStore.selectedFriend ? '50%' : '100%'
+  const left = isFriend ? '50%' : '0'
+
   return {
     top: `${topOffset}px`,
-    height: `${height}px`
+    height: `${height}px`,
+    width,
+    left,
+    position: 'absolute'
   }
 }
 
+// Загрузка при монтировании
+onMounted(() => {
+  eventsStore.fetchEvents()
+  eventsStore.fetchFriends()
+})
 </script>
 
 
@@ -316,7 +346,34 @@ body {
 }
 
 .notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-weight: bold;
+  z-index: 10000;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  color: white;
+  animation: fadeInOut 3s ease-in-out;
+}
 
+.notification.success {
+  background-color: #2e7d32; /* зелёный */
+}
+
+.notification.error {
+  background-color: #c62828; /* красный */
+}
+
+.notification.info {
+  background-color: #0277bd; /* голубой */
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(-10px); }
+  10%, 90% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-10px); }
 }
 
 .container {
@@ -363,6 +420,16 @@ body {
 
 #range-mode-select {
     margin-top: 5px;
+}
+
+.friend-item {
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 4px;
+}
+.friend-item.selected {
+  background-color: #4caf50;
+  color: white;
 }
 
 .views {
@@ -542,6 +609,10 @@ footer {
 
 .events-list {
   margin: 1rem 0;
+}
+
+.event.friend {
+  background-color: #c5cae9; /* другой цвет для друга */
 }
 
 .add-btn,

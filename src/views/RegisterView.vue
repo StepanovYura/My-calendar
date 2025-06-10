@@ -63,7 +63,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
 
 const router = useRouter()
-const auth = useAuthStore()
+const authStore = useAuthStore()
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 
@@ -74,18 +74,23 @@ const form = ref({
   confirmPassword: ''
 })
 
-function handleRegister() {
+async function handleRegister() {
   if (form.value.password !== form.value.confirmPassword) {
     alert('Пароли не совпадают!')
     return
   }
   
-  auth.register({ 
+  const success = await authStore.register({
     email: form.value.email,
-    username: form.value.username,
+    name: form.value.username,
     password: form.value.password
   })
-  router.push('/login')
+  
+  if (success) {
+    router.push('/login')
+  } else {
+    alert(authStore.error || 'Ошибка регистрации')
+  }
 }
 </script>
 

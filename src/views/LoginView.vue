@@ -23,15 +23,15 @@
           required
         >
         <span class="toggle-icon" @click="showPassword = !showPassword">
-          <i :class="showPassword ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
+          <i :class="showPassword ? 'eye-slash' : 'eye'"></i> <!-- НЕ РАБОТАЕТ СКРЫТИЕ\ПОКАЗ ПАРОЛЯ-->
         </span>
       </div>
 
       <button type="submit" id="auth-btn">Войти</button>
       </form>
     </div>
-    <RouterLink to="/changePswd">Забыли пароль?</RouterLink><!--ДОБАВИТЬ СТРАНИЦУ С ИЗМЕНЕНИЕМ ПАРОЛЯ ПОЛЬЗОВАТЕЛЯ-->
-    <span>Ещё не регистрировались? <RouterLink to="/register">Зарегистрироваться</RouterLink></span><!--ДОБАВИТЬ СТРАНИЦУ С РЕГИСТРАЦИЕЙ ПОЛЬЗОВАТЕЛЯ(сделать копию этой, но чуть изменить)-->
+    <RouterLink to="/changePswd">Забыли пароль?</RouterLink>
+    <span>Ещё не регистрировались? <RouterLink to="/register">Зарегистрироваться</RouterLink></span>
   </div>
 </template>
 
@@ -42,7 +42,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
 
 const router = useRouter()
-const auth = useAuthStore()
+const authStore = useAuthStore()
 const showPassword = ref(false)
 
 const form = ref({
@@ -50,12 +50,13 @@ const form = ref({
   password: ''
 })
 
-function handleLogin() {
-  auth.login({ 
-    email: form.value.email, 
-    password: form.value.password 
-  })
-  router.push('/')
+async function handleLogin() {
+  const success = await authStore.login(form.value)
+  if (success) {
+    router.push('/')
+  } else {
+    alert(authStore.error || 'Ошибка авторизации')
+  }
 }
 </script>
 

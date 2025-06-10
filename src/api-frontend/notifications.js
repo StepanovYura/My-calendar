@@ -1,6 +1,6 @@
 import { handleResponse } from './utils';
 
-const API_BASE = '/api/notifications';
+const API_BASE = 'http://127.0.0.1:5000/api/notifications';
 
 /**
  * Получить все уведомления пользователя
@@ -39,7 +39,7 @@ export function getGeneralNotifications(token) {
  * Отметить уведомление как прочитанное (или удалить его)
  */
 export function markNotificationAsRead(token, notificationId) {
-  return fetch(`${API_BASE}/read/${notificationId}`, {
+  return fetch(`${API_BASE}/${notificationId}/mark-read`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

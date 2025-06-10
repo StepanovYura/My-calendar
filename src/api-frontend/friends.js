@@ -2,7 +2,7 @@
 
 import { handleResponse } from './utils';
 
-const API_BASE = '/api/friends';
+const API_BASE = 'http://127.0.0.1:5000/api/friends';
 
 /**
  * Отправка запроса на дружбу
@@ -27,7 +27,7 @@ export function sendFriendRequest(token, userId) {
  * @param {'accept' | 'decline'} action - ответ пользователя
  */
 export function respondToFriendRequest(token, requestId, action) {
-  return fetch(`${API_BASE}/respond/${requestId}`, {
+  return fetch(`${API_BASE}/request/${requestId}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -42,7 +42,7 @@ export function respondToFriendRequest(token, requestId, action) {
  * @param {string} token - JWT токен
  */
 export function getFriendList(token) {
-  return fetch(`${API_BASE}/list`, {
+  return fetch(`${API_BASE}`, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -56,7 +56,7 @@ export function getFriendList(token) {
  * @param {number} friendId - ID друга
  */
 export function getFriendDetail(token, friendId) {
-  return fetch(`${API_BASE}/detail/${friendId}`, {
+  return fetch(`${API_BASE}/${friendId}`, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -70,7 +70,7 @@ export function getFriendDetail(token, friendId) {
  * @param {number} friendId - ID друга
  */
 export function removeFriend(token, friendId) {
-  return fetch(`${API_BASE}/remove/${friendId}`, {
+  return fetch(`${API_BASE}/${friendId}/remove`, {
     method: 'DELETE',
     headers: {
       Authorization: `Bearer ${token}`,

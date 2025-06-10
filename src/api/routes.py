@@ -12,7 +12,7 @@ from api.events_drafts import EventDraftCreate, VoteForDraft, FinalizeDraft
 api_bp = Blueprint('api', __name__)
 api = Api(api_bp)
 
-api.add_resource(UserEvents, '/events/my')
+api.add_resource(UserEvents, '/events/user') # my -> user
 api.add_resource(EventDetail, '/events/<int:event_id>')
 api.add_resource(AllEvents, '/events/all')
 api.add_resource(EventEditor, '/events/<int:event_id>/edit')
