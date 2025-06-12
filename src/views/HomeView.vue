@@ -125,19 +125,19 @@
   </div>
 
   <div v-if="showEventModal" class="modal-overlay" @click.self="closeEventModal">
-  <div class="modal-content">
-    <h3>Событие: {{ selectedEvent?.title }}</h3>
-    <p><strong>Описание:</strong> {{ selectedEvent?.description || 'нет' }}</p>
-    <p><strong>Время начала:</strong> {{ new Date(selectedEvent?.date_time).toLocaleString('ru-RU') }}</p>
-    <p><strong>Длительность:</strong> {{ selectedEvent?.duration_minutes }} минут</p>
+    <div class="modal-content">
+      <h3>Событие: {{ selectedEvent?.title }}</h3>
+      <p><strong>Описание:</strong> {{ selectedEvent?.description || 'нет' }}</p>
+      <p><strong>Время начала:</strong> {{ new Date(selectedEvent?.date_time).toLocaleString('ru-RU') }}</p>
+      <p><strong>Длительность:</strong> {{ selectedEvent?.duration_minutes }} минут</p>
 
-    <router-link :to="`/edit-event/${selectedEvent?.id}`">
-      <button class="edit-btn">Редактировать</button>
-    </router-link>
-    <button class="delete-btn" @click="deleteEvent(selectedEvent?.id)">Удалить</button>
-    <button class="close-btn" @click="closeEventModal">Закрыть</button>
+      <router-link :to="`/edit-event/${selectedEvent?.id}`">
+        <button class="edit-btn">Редактировать</button>
+      </router-link>
+      <button class="delete-btn" @click="deleteEvent(selectedEvent?.id)">Удалить</button>
+      <button class="close-btn" @click="closeEventModal">Закрыть</button>
+    </div>
   </div>
-</div>
 </template>
 
 <!-- РЕАЛИЗОВАТЬ ПРОВЕРКУ ТОГО ЧТО СОБЫТИЯ НЕ НАСЛАИВАЮТСЯ ДРУГ НА ДРУГА ПРИ СОЗДАНИИ -->

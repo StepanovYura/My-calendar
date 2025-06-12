@@ -7,7 +7,7 @@ import {
   addParticipantToEvent as apiAddParticipantToEvent,
   getEventParticipants
 } from '../api-frontend/events'
-import { getFriendList } from '../api-frontend/friends'
+import { getFriendList, removeFriend as apiRemoveFriend } from '../api-frontend/friends'
 import { useAuthStore } from './authStore'
 
 export const useEventsStore = defineStore('events', {
@@ -18,7 +18,8 @@ export const useEventsStore = defineStore('events', {
     isLoading: false,
     error: null,
     participantsByEvent: {},
-    userEvents: []
+    userEvents: [],
+    currentUsername: null,
   }),
 
   actions: {
@@ -64,6 +65,26 @@ export const useEventsStore = defineStore('events', {
         throw new Error(err.message || 'Не удалось загрузить события')
       } finally {
         this.isLoading = false
+      }
+    },
+    
+    async fetchUserEvents() {
+      try {
+        const authStore = useAuthStore()
+        const token = authStore.token
+        const result = await getUserEvents(token)
+        this.currentUsername = authStore.user?.username || null
+
+        this.userEvents = result.sort((a, b) =>
+          new Date(a.date_time) - new Date(b.date_time)
+        )
+
+        // Подгружаем участников для каждого события
+        for (const event of this.userEvents) {
+          await this.fetchEventParticipants(event.id)
+        }
+      } catch (error) {
+        console.error('Ошибка при загрузке своих событий:', error)
       }
     },
 
@@ -146,6 +167,19 @@ export const useEventsStore = defineStore('events', {
         await this.fetchEventParticipants(eventId)
       } catch (err) {
         throw new Error(err.message || 'Ошибка добавления участника')
+      }
+    },
+    
+    async removeFriend(friendId) {
+      try {
+        const authStore = useAuthStore()
+        const token = authStore.token
+
+        await apiRemoveFriend(token, friendId)
+        this.friends = this.friends.filter(f => f.id !== friendId)
+      } catch (err) {
+        this.error = err.message || 'Ошибка при удалении друга'
+        throw err
       }
     },
 
