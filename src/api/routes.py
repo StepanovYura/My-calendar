@@ -1,6 +1,6 @@
 from flask import Blueprint
 from flask_restful import Api
-from api.events import EventDetail, UserEvents, AllEvents, EventEditor, EventCreate
+from api.events import EventDetail, UserEvents, AllEvents, EventEditor, EventCreate, EventParticipants, EventAddParticipant
 from api.notifications import UserNotifications, UserInvitationNotifications, UserGeneralNotifications, MarkNotificationAsRead
 from api.groups import GroupCreate, GroupJoin, GroupLeave, GroupDelete, GroupEdit, GroupInvite, UserGroups, GroupDetail
 from api.auth import UserRegister, UserLogin, UserLogout, CheckAuth
@@ -17,6 +17,9 @@ api.add_resource(EventDetail, '/events/<int:event_id>')
 api.add_resource(AllEvents, '/events/all')
 api.add_resource(EventEditor, '/events/<int:event_id>/edit')
 api.add_resource(EventCreate, '/events/create')
+api.add_resource(EventParticipants, '/events/<int:event_id>/participants')
+api.add_resource(EventAddParticipant, "/events/<int:event_id>/add-participant")
+
 
 api.add_resource(UserNotifications, '/notifications')
 api.add_resource(UserInvitationNotifications, '/notifications/invitations')

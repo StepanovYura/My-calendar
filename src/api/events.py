@@ -4,7 +4,7 @@ from flask_restful import Resource
 from datetime import datetime, date
 from flask_login import current_user, login_required
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from api.notifications import notify_event_participants
+from api.notifications import notify_event_participants, notify_added_to_event
 from models.models import Event, EventParticipant, User, Friend
 
 #--------------------------GET_методы---------------------------
@@ -137,6 +137,38 @@ class AllEvents(Resource):
             'status': e.status
         } for e in events]
     
+# Получение всех участников события
+class EventParticipants(Resource):
+    @jwt_required()
+    def get(self, event_id):
+        # Проверяем, что пользователь имеет доступ к событию
+        is_participant = db.session.query(EventParticipant).filter_by(
+            event_id=event_id,
+            user_id=int(get_jwt_identity())
+        ).first()
+
+        if not is_participant:
+            return {"error": "Вы не являетесь участником этого события"}, 403
+
+        # Получаем всех участников события с их данными
+        participants = db.session.query(
+            EventParticipant,
+            User
+        ).join(
+            User, EventParticipant.user_id == User.id
+        ).filter(
+            EventParticipant.event_id == event_id
+        ).all()
+
+        return [{
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "avatar_url": user.avatar_url,
+            "role": user.role,
+            "privacy_setting": user.privacy_setting,
+        } for participant, user in participants]
+    
 #--------------------------PUT/DELETE_методы---------------------------
 
 class EventEditor(Resource):
@@ -203,11 +235,75 @@ class EventCreate(Resource):
             created_by=int(get_jwt_identity())
         )
         db.session.add(new_event)
-        db.session.commit()
+        db.session.flush() # получим event.id до коммита
 
         # Добавить текущего пользователя как участника
         participant = EventParticipant(user_id=int(get_jwt_identity()), event_id=new_event.id)
         db.session.add(participant)
+
+        # Если указан друг
+        friend_username = data.get("friend_username")
+        if friend_username:
+            friend_user = User.query.filter_by(name=friend_username).first()
+            if not friend_user:
+                db.session.rollback()
+                return {"message": "Пользователь с таким никнеймом не найден"}, 404
+
+            # Проверка дружбы
+            friendship = Friend.query.filter(
+                ((Friend.sender_id == int(get_jwt_identity())) & (Friend.receiver_id == friend_user.id)) |
+                ((Friend.sender_id == friend_user.id) & (Friend.receiver_id == int(get_jwt_identity()))),
+                Friend.status == 'accepted'
+            ).first()
+
+            if not friendship:
+                    db.session.rollback()
+                    return {"message": "Пользователь не является вашим другом"}, 403
+            
+            # Добавляем друга в участники
+            db.session.add(EventParticipant(user_id=friend_user.id, event_id=new_event.id))
+
+            notify_added_to_event(new_event.id, friend_user.id)
+
+        db.session.commit()
+        return {"message": "Событие создано", "id": new_event.id}
+
+
+class EventAddParticipant(Resource):
+    @jwt_required()
+    def post(self, event_id):
+        data = request.get_json()
+        friend_username = data.get("username")
+        if not friend_username:
+            return {"error": "Не указано имя пользователя"}, 400
+
+        user = db.session.get(User, int(get_jwt_identity()))
+        event = db.session.get(Event, event_id)
+
+        if not event:
+            return {"error": "Событие не найдено"}, 404
+
+        # Проверка прав
+        if user.id != event.created_by and user.role != 'admin':
+            return {"error": "Недостаточно прав"}, 403
+
+        # Ищем пользователя-друга
+        friend = db.session.query(User).filter_by(name=friend_username).first()
+        if not friend:
+            return {"error": "Пользователь не найден"}, 404
+
+        # Проверка: уже добавлен?
+        exists = db.session.query(EventParticipant).filter_by(
+            event_id=event_id,
+            user_id=friend.id
+        ).first()
+
+        if exists:
+            return {"message": "Пользователь уже участвует в событии"}
+
+        # Добавляем друга
+        participant = EventParticipant(event_id=event_id, user_id=friend.id)
+        db.session.add(participant)
         db.session.commit()
 
-        return {"message": "Событие создано", "id": new_event.id}
+        return {"message": f"Пользователь {friend.name} добавлен к событию"}

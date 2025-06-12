@@ -8,9 +8,22 @@
       </div>
       <div class="nowData"><p>{{ currentDate }}</p></div>
       <div class="search">
-        <form>
-          <input type="search" name="text" class="search":class="{active: $route.path !== '/'}" placeholder="Найти дату">
-          <input type="submit" name="submit" class="submit":class="{active: $route.path !== '/'}" value="Найти">
+        <form @submit.prevent="searchByDate">
+          <input 
+            v-model="searchDate"
+            type="date"
+            name="text"
+            class="search"
+            :class="{active: $route.path !== '/'}"
+            placeholder="Найти дату"
+          >
+          <input 
+            type="submit"
+            name="submit"
+            class="submit"
+            :class="{active: $route.path !== '/'}"
+            value="Найти"
+          >
         </form>
       </div>
       <div class="nav-buttons">
@@ -39,13 +52,21 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
 const currentDate = ref('')
+const router = useRouter()
+const searchDate = ref('')
 
 onMounted(() => {
   const date = new Date()
   currentDate.value = date.toLocaleDateString('ru-RU')
 })
+
+function searchByDate() {
+  if (!searchDate.value) return
+  router.push({ path: '/', query: { date: searchDate.value } })
+}
 
 function toggleTheme() {
   // Заглушка

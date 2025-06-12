@@ -9,6 +9,8 @@ import LoginView from '../views/LoginView.vue'
 import { useAuthStore } from '../stores/authStore'
 import ChangePswdView from '../views/ChangePswdView.vue'
 import RegisterView from '../views/RegisterView.vue'
+import CreateEventView from '../views/CreateEventView.vue'
+import EditEventView from '../views/EditEventView.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: HomeView },
@@ -19,7 +21,9 @@ const routes = [
   { path: '/profile', name: 'Profile', component: ProfileView, meta: { requiresAuth: true } },
   { path: '/admin', name: 'Admin', component: AdminView, meta: { requiresAdmin: true } },
   { path: '/changePswd', name: 'ChangePswd', component: ChangePswdView },
-  { path: '/register', name: 'Register', component: RegisterView }
+  { path: '/register', name: 'Register', component: RegisterView },
+  { path: '/create-event', name: 'CreateEvent', component: CreateEventView, meta: { requiresAuth: true } },
+  { path: '/edit-event/:id', name: 'EditEvent', component: EditEventView, meta: { requiresAuth: true } }
 ]
 
 const router = createRouter({

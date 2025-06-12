@@ -53,6 +53,21 @@ export function getAllEvents(token) {
 }
 
 /**
+ * Получение всех участников конкретного события
+ * @param {string} token - JWT токен пользователя
+ * @param {number} eventId - ID события
+ */
+export function getEventParticipants(token, eventId) {
+  return fetch(`${API_BASE}/${eventId}/participants`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json',
+    },
+  }).then(handleResponse);
+}
+
+/**
  * Создание события
  * @param {string} token - JWT токен пользователя
  * @param {Object} eventData - { title, description, date_time, duration_minutes }
@@ -96,5 +111,23 @@ export function deleteEvent(token, eventId) {
     headers: {
       'Authorization': `Bearer ${token}`,
     },
+  }).then(handleResponse);
+}
+
+
+/**
+ * Добавление участника к событию
+ * @param {string} token - JWT токен пользователя
+ * @param {number} eventId - ID события
+ * @param {string} username - Name пользователя
+ */
+export function addParticipantToEvent(token, eventId, username) {
+  return fetch(`${API_BASE}/${eventId}/add-participant`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ username })
   }).then(handleResponse);
 }

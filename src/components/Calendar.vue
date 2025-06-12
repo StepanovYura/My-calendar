@@ -24,7 +24,7 @@
           <li v-if="events.length === 0">Нет событий</li>
           <li v-for="(event, index) in events" :key="index">{{ event }}</li>
         </ul>
-        <button class="add-btn" @click="addEvent">Добавить событие</button>
+        <router-link :to="{ path: '/create-event', query: { date: selectedDate.toISOString() } }" class="add-btn">Добавить событие</router-link>
         <button class="close-btn" @click="closeModal">Закрыть</button>
       </div>
     </div>
@@ -118,10 +118,6 @@ function openModal(date) {
 
 function closeModal() {
   showModal.value = false
-}
-
-function addEvent() {
-  alert('Форма добавления события пока не реализована')
 }
 </script>
 

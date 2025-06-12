@@ -3,7 +3,9 @@ import {
   getUserEvents,
   deleteEvent as apiDeleteEvent,
   createEvent as apiCreateEvent,
-  updateEvent as apiUpdateEvent
+  updateEvent as apiUpdateEvent,
+  addParticipantToEvent as apiAddParticipantToEvent,
+  getEventParticipants
 } from '../api-frontend/events'
 import { getFriendList } from '../api-frontend/friends'
 import { useAuthStore } from './authStore'
@@ -14,7 +16,9 @@ export const useEventsStore = defineStore('events', {
     friends: [],
     selectedFriend: null,
     isLoading: false,
-    error: null
+    error: null,
+    participantsByEvent: {},
+    userEvents: []
   }),
 
   actions: {
@@ -79,6 +83,21 @@ export const useEventsStore = defineStore('events', {
       }
     },
 
+    async fetchEventParticipants(eventId) {
+      try {
+        const authStore = useAuthStore()
+        const token = authStore.token
+        const participants = await getEventParticipants(token, eventId)
+
+        // Сохраняем по eventId
+        this.participantsByEvent[eventId] = participants
+        this.error = null
+      } catch (err) {
+        this.error = `Ошибка загрузки участников события: ${err.message}`
+        this.participantsByEvent[eventId] = []
+      }
+    },
+
     async deleteEvent(eventId) {
       try {
         const authStore = useAuthStore()
@@ -86,6 +105,7 @@ export const useEventsStore = defineStore('events', {
 
         await apiDeleteEvent(token, eventId)
         this.events = this.events.filter(e => e.id !== eventId)
+        await this.fetchEvents()
       } catch (err) {
         throw new Error(err.message || 'Ошибка удаления события')
       }
@@ -98,6 +118,7 @@ export const useEventsStore = defineStore('events', {
 
         const newEvent = await apiCreateEvent(token, eventData)
         this.events.push(newEvent)
+        await this.fetchEvents()
       } catch (err) {
         throw new Error(err.message || 'Ошибка создания события')
       }
@@ -111,8 +132,20 @@ export const useEventsStore = defineStore('events', {
         const updated = await apiUpdateEvent(token, eventId, updatedData)
         const index = this.events.findIndex(e => e.id === eventId)
         if (index !== -1) this.events[index] = updated
+        await this.fetchEvents()
       } catch (err) {
         throw new Error(err.message || 'Ошибка обновления события')
+      }
+    },
+
+    async addParticipantToEvent(eventId, username) {
+      try {
+        const authStore = useAuthStore()
+        const token = authStore.token
+        await apiAddParticipantToEvent(token, eventId, username)
+        await this.fetchEventParticipants(eventId)
+      } catch (err) {
+        throw new Error(err.message || 'Ошибка добавления участника')
       }
     },
 
@@ -134,16 +167,28 @@ export const useEventsStore = defineStore('events', {
 
   getters: {
     eventsForDay: (state) => (day) => {
-      const dayStr = new Date(day).toDateString()
-      console.log('События для дня 1:', day, state.events.filter(e =>
-        new Date(e.date_time).toDateString() === dayStr
-      )); 
-      console.log('все события: ', state.events);
-      return state.events.filter(e =>
-        new Date(e.date_time).toDateString() === dayStr
-      )
+      if (!day) return []
+
+      const targetDate = new Date(day)
+      //console.log("targetDate: ", targetDate)
+      // console.log('state.events: ', state.events)
+      return state.events.filter(e => {
+        const eventDate = new Date(e.date_time) 
+        //console.log("eventDate || targetDate : ", eventDate, targetDate, eventDate.getFullYear() === targetDate.getFullYear(), eventDate.getMonth() === targetDate.getMonth(), eventDate.getDate() === targetDate.getDate())
+        console.log('state.events || result: ', state.events, eventDate.getFullYear() === targetDate.getFullYear() &&
+              eventDate.getMonth() === targetDate.getMonth() &&
+              eventDate.getDate() === targetDate.getDate())
+        return (
+          eventDate.getFullYear() === targetDate.getFullYear() &&
+          eventDate.getMonth() === targetDate.getMonth() &&
+          eventDate.getDate() === targetDate.getDate()
+        )
+      })
     },
     hasFriends: (state) => state.friends.length > 0,
-    selectedFriendName: (state) => state.selectedFriend?.name || null
+    selectedFriendName: (state) => state.selectedFriend?.name || null,
+    getParticipantsByEvent: (state) => (eventId) => {
+      return state.participantsByEvent[eventId] || []
+    }
   }
 })

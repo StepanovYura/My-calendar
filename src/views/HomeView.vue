@@ -59,15 +59,15 @@
             @click="openEventModal(event)">
             {{ event.title }}
           </div>
-          <button type="button" id="add-event-button">
-          <img src="../assets/append-light-96.png" alt="Добавить" width="60" height="60">
-          </button>
+          <router-link to="/create-event" id="add-event-button">
+            <img src="../assets/append-light-96.png" alt="Добавить" width="60" height="60">
+          </router-link>
         </div>
 
         <div v-else-if="rangeMode === 'week'" class="week-schedule">
           <div class="week-row">
             <div v-for="(day, index) in weekDays" :key="index" class="day-column" 
-              @click="openModal(day.date)">
+              @click="openModal(day)">
               <div class="day-header">
                 {{ day.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric' }) }}
               </div>
@@ -86,22 +86,22 @@
                   class="event"
                   :class="{ friend: event._isFriend }"
                   :style="getEventStyle(event, event._isFriend)"
-                  @click="openEventModal(event)">
+                  >
                   <!-- {{ event.title }} -->
                 </div>
               </div>
             </div>
           </div>
-          <button type="button" id="add-event-button">
+          <router-link to="/create-event" id="add-event-button">
             <img src="../assets/append-light-96.png" alt="Добавить" width="60" height="60">
-          </button>
+          </router-link>
         </div>
 
         <div v-else>
         <Calendar />
-        <button type="button" id="add-event-button" >
+        <router-link to="/create-event" id="add-event-button">
           <img src="../assets/append-light-96.png" alt="Добавить" width="60" height="60">
-        </button>
+        </router-link>
         <!-- <CalendarMonth :month="selectedMonth" :events="eventsForMonth" @day-click="openDayModal" /> -->
         </div>
       </div>
@@ -116,10 +116,10 @@
      <div class="modal-content">
       <h3>События на {{ selectedDateFormatted }}</h3>
       <ul class="events-list">
-        <li v-if="eventsForSelectedDay.length === 0">Нет событий</li>
-        <li v-else v-for="(event, index) in eventsForSelectedDay" :key="index">{{ event.title }}</li>
+        <li v-if="weekEventsForDay(selectedDate).length == 0">Нет событий</li>
+        <li v-else v-for="(event , index) in weekEventsForDay(selectedDate)" :key="index" class="event-modle" @click="openEventModal(event)">{{ event.title }}</li>
       </ul>
-      <button class="add-btn" @click="addEvent">Добавить событие</button>
+      <router-link :to="{ path: '/create-event', query: { date: selectedDate.toISOString() } }" class="add-btn">Добавить событие</router-link>
       <button class="close-btn" @click="closeModal">Закрыть</button>
     </div>
   </div>
@@ -140,9 +140,10 @@
 </div>
 </template>
 
-<!-- МОДАЛЬНОЕ ОКНО НЕ РАБОТАЕТ, ПРИЛОЖЕНИЕ СРАЗУ ЗАВИСАЕТ, АВТОРИЗАЦИЯ РЕГИСТРАЦИЯ И ТД ТОЖЕ -->
+<!-- РЕАЛИЗОВАТЬ ПРОВЕРКУ ТОГО ЧТО СОБЫТИЯ НЕ НАСЛАИВАЮТСЯ ДРУГ НА ДРУГА ПРИ СОЗДАНИИ -->
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useEventsStore } from '../stores/eventsStore'
 import { useAuthStore } from '../stores/authStore'
 import Calendar from '../components/Calendar.vue'
@@ -150,6 +151,7 @@ import Calendar from '../components/Calendar.vue'
 
 const eventsStore = useEventsStore()
 const authStore = useAuthStore()
+const route = useRoute()
 
 const today = new Date()
 const selectedDay = ref(new Date())
@@ -219,6 +221,8 @@ const selectedDateFormatted = computed(() => {
 
 function openModal(date) {
   selectedDate.value = date
+  console.log('🔍 Выбранная дата в модалке:', date)
+  console.log('🗓 События в store:', eventsStore.events)
   showModal.value = true
 }
 
@@ -235,10 +239,6 @@ function closeEventModal() {
   showEventModal.value = false
 }
 
-function addEvent() {
-  alert('Форма добавления события пока не реализована')
-}
-
 async function deleteEvent(id) {
   if (!confirm('Удалить это событие?')) return
   try {
@@ -252,14 +252,14 @@ async function deleteEvent(id) {
 
 // Получение событий на выбранный день
 function eventsForSelectedDay() {
-  const events = eventsStore.eventsForDay(selectedDay.value);
-  console.log('События для дня 2:', selectedDay.value, events);
+  const events = eventsStore.eventsForDay(selectedDate.value || selectedDay.value);
   return events;
-  // return eventsStore.eventsForDay(selectedDay.value)
 }
 
 // Получение событий на конкретный день (используется в режиме недели)
 function weekEventsForDay(day) {
+  console.log("day: ", day)
+  console.log('ALL: ', eventsStore.eventsForDay(day), eventsStore.eventsForDay(day).length)
   return eventsStore.eventsForDay(day)
 }
 
@@ -288,9 +288,22 @@ function getEventStyle(event, isFriend = false) {
 }
 
 // Загрузка при монтировании
-onMounted(() => {
-  eventsStore.fetchEvents()
-  eventsStore.fetchFriends()
+onMounted(async () => {
+  await eventsStore.fetchEvents()
+  await eventsStore.fetchFriends()
+  watch(
+    () => route.query.date,
+    (newDate) => {
+      if (newDate) {
+        const parsed = new Date(newDate)
+        if (!isNaN(parsed)) {
+          selectedDay.value = parsed
+          rangeMode.value = 'day'
+        }
+      }
+    },
+    { immediate: true } // сработает сразу при заходе на страницу
+  )
 })
 </script>
 
@@ -523,6 +536,10 @@ body {
   border-radius: 4px;
   z-index: 1;
   /* min-height: 100%; */
+}
+
+.event-modle {
+  cursor: pointer;
 }
 
 #add-event-button {
