@@ -4,7 +4,7 @@ from api.routes import api_bp  # маршруты API (например, events.
 from extensions import mail, db, jwt
 
 # === Создание приложения ===
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')
 app.config['SECRET_KEY'] = 'my-secret-key'  # использует Flask-Login
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Namigra_20@localhost:5432/schedule_db?options=-c search_path=schedule_app,public'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -15,7 +15,7 @@ app.config['MAIL_USERNAME'] = 'yurastep05@gmail.com'
 app.config['MAIL_PASSWORD'] = 'Namigra20' # или Namigra20 # НУЖЕН НЕ ОБЫЧНЫЙ ПАРОЛЬ А СГЕНЕРИРОВАННЫЙ ОТ GOOGLE В APP-PASSWORD
 
 # === Подключение CORS (для фронта) ===
-CORS(app, supports_credentials=True)
+CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}}) #CORS(app, supports_credentials=True)
 
 # === Инициализация базы данных, jwt и mail ===
 db.init_app(app)

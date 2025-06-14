@@ -2,12 +2,13 @@ from flask import Blueprint
 from flask_restful import Api
 from api.events import EventDetail, UserEvents, AllEvents, EventEditor, EventCreate, EventParticipants, EventAddParticipant
 from api.notifications import UserNotifications, UserInvitationNotifications, UserGeneralNotifications, MarkNotificationAsRead
-from api.groups import GroupCreate, GroupJoin, GroupLeave, GroupDelete, GroupEdit, GroupInvite, UserGroups, GroupDetail
+from api.groups import GroupInviteResponse, GroupCreate, GroupMembers, GroupJoin, GroupLeave, GroupDelete, GroupEdit, GroupInvite, UserGroups, GroupDetail, GroupSchedule
 from api.auth import UserRegister, UserLogin, UserLogout, CheckAuth
 from api.user import UserProfile, ChangePassword, DeleteAccount, UserSearch
 from api.admin import AdminUserList, AdminUserActions
 from api.friends import FriendRequest, FriendResponse, FriendList, FriendDetail, RemoveFriend
 from api.events_drafts import EventDraftCreate, VoteForDraft, FinalizeDraft
+from api.match import MatchDays
 
 api_bp = Blueprint('api', __name__)
 api = Api(api_bp)
@@ -20,6 +21,7 @@ api.add_resource(EventCreate, '/events/create')
 api.add_resource(EventParticipants, '/events/<int:event_id>/participants')
 api.add_resource(EventAddParticipant, "/events/<int:event_id>/add-participant")
 
+api.add_resource(MatchDays, '/match')
 
 api.add_resource(UserNotifications, '/notifications')
 api.add_resource(UserInvitationNotifications, '/notifications/invitations')
@@ -34,6 +36,9 @@ api.add_resource(GroupEdit, '/groups/<int:group_id>')
 api.add_resource(GroupInvite, '/groups/<int:group_id>/invite')
 api.add_resource(UserGroups, '/groups/my')
 api.add_resource(GroupDetail, '/groups/<int:group_id>')
+api.add_resource(GroupSchedule, '/groups/<int:group_id>/schedule')
+api.add_resource(GroupMembers, '/groups/<int:group_id>/members')
+api.add_resource(GroupInviteResponse, '/groups/<int:group_id>/invite-response')
 
 api.add_resource(UserRegister, '/auth/register')
 api.add_resource(UserLogin, '/auth/login')

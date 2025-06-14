@@ -3,21 +3,211 @@
   <main class="container">
     <div class="views">
       <div class="choice-friend">
-        <input type="checkbox" id="filter-message-requestToFriend" name="filter-message" value="request">
-        <label for="filter-message-requestToFriend">Запросы в друзья</label>
-
-        <input type="checkbox" id="filter-message-alert" name="filter-message" value="alert">
-        <label for="filter-message-alert">Оповещения</label>
+        <button class="filter-btn" @click="toggleRequestFilter">Запросы в друзья
+            <span v-if="isRequestFilterActive">✓</span>
+        </button>
+        <button class="filter-btn" @click="toggleAlertFilter">Оповещения
+            <span v-if="isAlertFilterActive">✓</span>
+        </button>
       </div>
+
       <div class="calendary">
-        <p>Заглушка</p>
+        <h3>Ваши уведомления</h3>
+
+        <div v-if="isLoading" class="spinner">Загрузка...</div>
+
+        <ul class="notification-list" v-else>
+          <li v-for="note in notifications" :key="note.id" :class="{ read: note.read_status }">
+            <div class="note-content">
+              <p><strong>{{ note.sender_name }}</strong>: {{ note.message }}</p>
+              <small>{{ new Date(note.created_at).toLocaleString() }}</small>
+            </div>
+            <div class="note-actions">
+              <button @click="toggleRead(note)">
+                {{ note.read_status ? 'Не прочитано' : 'Прочитано' }}
+              </button>
+              <button v-if="note.type === 'invitation'" @click="openRespondModal(note)">
+                Ответить
+              </button>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Модалка ответа -->
+    <div v-if="showRespondModal" class="modal-overlay" @click.self="closeRespondModal">
+      <div class="modal-content">
+        <h3>Ответить на приглашение</h3>
+        <p>{{ selectedNote?.message }}</p>
+        <div class="modal-buttons">
+          <button @click="respondToInvitation('accept')">Согласиться</button>
+          <button @click="respondToInvitation('decline')">Отказаться</button>
+          <button @click="closeRespondModal">Назад</button>
+        </div>
       </div>
     </div>
   </main>
-  <footer>
-    <p>Пока заглушка</p>
-  </footer>
 </template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useAuthStore } from '../stores/authStore'
+import {
+  getAllNotifications,
+  getInvitationNotifications,
+  getGeneralNotifications,
+  markNotificationAsRead
+} from '../api-frontend/notifications'
+import { respondToFriendRequest } from '../api-frontend/friends'
+import { respondToGroupInvitation } from '../api-frontend/groups' // предположим, у тебя есть такой API
+
+const authStore = useAuthStore()
+const isRequestFilterActive = ref(false)
+const isAlertFilterActive = ref(false)
+
+const notifications = ref([])
+const cache = {
+  all: null,
+  invitations: null,
+  general: null
+}
+
+const isLoading = ref(false)
+const showRespondModal = ref(false)
+const selectedNote = ref(null)
+
+onMounted(() => {
+  loadAll()
+})
+
+async function toggleRequestFilter() {
+  isRequestFilterActive.value = !isRequestFilterActive.value
+  await applyFilters()
+}
+
+async function toggleAlertFilter() {
+  isAlertFilterActive.value = !isAlertFilterActive.value
+  await applyFilters()
+}
+
+async function applyFilters() {
+  const token = authStore.token
+  isLoading.value = true
+
+  try {
+    if (
+      (isRequestFilterActive.value && isAlertFilterActive.value) ||
+      (!isRequestFilterActive.value && !isAlertFilterActive.value)
+    ) {
+      // Обе нажаты или обе не нажаты — загружаем все
+      if (cache.all) {
+        notifications.value = cache.all
+      } else {
+        notifications.value = await getAllNotifications(token)
+        cache.all = notifications.value
+      }
+    } else if (isRequestFilterActive.value) {
+      if (cache.invitations) {
+        notifications.value = cache.invitations
+      } else {
+        notifications.value = await getInvitationNotifications(token)
+        cache.invitations = notifications.value
+      }
+    } else if (isAlertFilterActive.value) {
+      if (cache.general) {
+        notifications.value = cache.general
+      } else {
+        notifications.value = await getGeneralNotifications(token)
+        cache.general = notifications.value
+      }
+    }
+  } catch (err) {
+    alert('Ошибка загрузки уведомлений: ' + err.message)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+async function loadAll() {
+  if (cache.all) {
+    notifications.value = cache.all
+    return
+  }
+  isLoading.value = true
+  const token = authStore.token
+  notifications.value = await getAllNotifications(token)
+  cache.all = notifications.value
+  isLoading.value = false
+}
+
+async function filterInvitations() {
+  if (cache.invitations) {
+    notifications.value = cache.invitations
+    return
+  }
+  isLoading.value = true
+  const token = authStore.token
+  notifications.value = await getInvitationNotifications(token)
+  cache.invitations = notifications.value
+  isLoading.value = false
+}
+
+async function filterGeneral() {
+  if (cache.general) {
+    notifications.value = cache.general
+    return
+  }
+  isLoading.value = true
+  const token = authStore.token
+  notifications.value = await getGeneralNotifications(token)
+  cache.general = notifications.value
+  isLoading.value = false
+}
+
+async function toggleRead(note) {
+  const token = authStore.token
+  await markNotificationAsRead(token, note.id)
+  note.read_status = !note.read_status
+}
+
+function openRespondModal(note) {
+  selectedNote.value = note
+  showRespondModal.value = true
+}
+
+function closeRespondModal() {
+  showRespondModal.value = false
+  selectedNote.value = null
+}
+
+async function respondToInvitation(action) {
+  if (!selectedNote.value) return
+  const token = authStore.token
+
+  try {
+    if (selectedNote.value.type === 'invitation') {
+      if (selectedNote.value.group_id === null) {
+        // Приглашение в друзья
+        await respondToFriendRequest(token, selectedNote.value.id, action)
+        alert(`Вы ${action === 'accept' ? 'приняли' : 'отклонили'} заявку в друзья`)
+      } else {
+        // Приглашение в группу
+        await respondToGroupInvitation(token, selectedNote.value.group_id, action)
+        alert(`Вы ${action === 'accept' ? 'приняли' : 'отклонили'} приглашение в группу`)
+      }
+    }
+
+    // После ответа очищаем кеш приглашений и перезагружаем
+    cache.invitations = null
+    await filterInvitations()
+  } catch (err) {
+    alert('Ошибка при ответе: ' + err.message)
+  } finally {
+    closeRespondModal()
+  }
+}
+</script>
 
 
 <style scoped>
@@ -179,5 +369,110 @@ footer {
     padding-left: 20px;
 }
 
+.notification-list {
+  list-style: none;
+  padding: 0;
+}
 
+.notification-list li {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.notification-list li.read {
+  background-color: #f0f0f0;
+}
+
+.note-actions button {
+  margin-right: 0.5rem;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.filter-btn {
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 1rem;
+
+  
+}
+
+
+.notification-list {
+  list-style: none;
+  padding: 0;
+}
+
+.notification-list li {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.notification-list li.read {
+  background-color: #f0f0f0;
+}
+
+.note-actions button {
+  margin-right: 0.5rem;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.filter-btn {
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 1rem;
+}
+
+.spinner {
+  text-align: center;
+  font-weight: bold;
+  padding: 1rem;
+}
 </style>

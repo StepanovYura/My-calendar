@@ -36,6 +36,23 @@ class EventDraftCreate(Resource):
         db.session.add(new_draft)
         db.session.commit()
         
+        # Проверка формата слотов
+        if 'slots' in data:
+            for slot in data['slots']:
+                if 'start' not in slot or 'end' not in slot:
+                    return {"error": "Каждый слот должен содержать start и end"}, 400
+
+        # Обработка слотов (если переданы)
+        slots = data.get('slots')
+        if slots:
+            for slot in slots:
+                db.session.add(AvailabilitySlot(
+                    event_draft_id=new_draft.id,
+                    user_id=int(get_jwt_identity()),
+                    start_time=datetime.fromisoformat(slot['start']),
+                    end_time=datetime.fromisoformat(slot['end'])
+                ))
+
         # Автоматическое согласие создателя
         db.session.add(EventConsent(
             event_draft_id=new_draft.id,
@@ -93,7 +110,7 @@ class VoteForDraft(Resource):
         
         db.session.commit()
         
-        # "за" и временные слоты должны отправляться в одном методе!!!!
+        # "за" и временные слоты должны отправляться в одном запросе вроде!!!!
         # Если голос "за" и есть слоты - сохраняем их
         if data['consent'] and data.get('slots'):
             # пока что пользователь может проголосовать единожды в черновике!!!

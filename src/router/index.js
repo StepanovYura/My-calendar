@@ -11,6 +11,9 @@ import ChangePswdView from '../views/ChangePswdView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import CreateEventView from '../views/CreateEventView.vue'
 import EditEventView from '../views/EditEventView.vue'
+import CreateDraftView from '../views/CreateDraftView.vue'
+import EditGroupView from '../views/EditGroupView.vue'
+import CreateGroupView from '../views/CreateGroupView.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: HomeView },
@@ -23,7 +26,10 @@ const routes = [
   { path: '/changePswd', name: 'ChangePswd', component: ChangePswdView },
   { path: '/register', name: 'Register', component: RegisterView },
   { path: '/create-event', name: 'CreateEvent', component: CreateEventView, meta: { requiresAuth: true } },
-  { path: '/edit-event/:id', name: 'EditEvent', component: EditEventView, meta: { requiresAuth: true } }
+  { path: '/edit-event/:id', name: 'EditEvent', component: EditEventView, meta: { requiresAuth: true } },
+  { path: '/create-draft/:groupId', name: 'CreateDraft', component: CreateDraftView, meta: { requiresAuth: true } },
+  { path: '/groups/:groupId/edit', name: 'EditGroup', component: EditGroupView, meta: { requiresAuth: true } },
+  { path: '/create-group', name: 'CreateGroup', component: CreateGroupView, meta: { requiresAuth: true } }
 ]
 
 const router = createRouter({

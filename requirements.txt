@@ -9,5 +9,7 @@ flask_login
 flask_mail
 flask_cors
 psycopg2
+xlsx
 
 @fortawesome/fontawesome-svg-core @fortawesome/free-solid-svg-icons @fortawesome/vue-fontawesome
+# npm install xlsx

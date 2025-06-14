@@ -9,10 +9,9 @@ export function createGroup(token, groupData) {
   return fetch(API_BASE, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(groupData),
+    body: groupData,
   }).then(handleResponse);
 }
 
@@ -59,10 +58,9 @@ export function editGroup(token, groupId, updatedData) {
   return fetch(`${API_BASE}/${groupId}`, {
     method: 'PUT',
     headers: {
-      'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(updatedData),
+    body: updatedData,
   }).then(handleResponse);
 }
 
@@ -99,5 +97,43 @@ export function getGroupDetail(token, groupId) {
     headers: {
       Authorization: `Bearer ${token}`,
     },
+  }).then(handleResponse);
+}
+
+/**
+ * Получить список событий группы
+ */
+export function getGroupSchedule(token, groupId) {
+  return fetch(`${API_BASE}/${groupId}/schedule`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }).then(handleResponse);
+}
+
+
+/**
+ * Получить список участников группы
+ */
+export function getGroupMembers(token, groupId) {
+  return fetch(`${API_BASE}/${groupId}/members`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  }).then(handleResponse)
+}
+
+/**
+ * ответ на invite
+ */
+export function respondToGroupInvitation(token, groupId, action) {
+  return fetch(`${API_BASE}/${groupId}/invite-response`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ action })
   }).then(handleResponse);
 }

@@ -9,6 +9,11 @@ import {
 } from '../api-frontend/events'
 import { getFriendList, removeFriend as apiRemoveFriend } from '../api-frontend/friends'
 import { useAuthStore } from './authStore'
+import { fetchUserProfile } from '../api-frontend/user'
+import {
+  voteForDraft as apiVoteForDraft,
+  finalizeDraft as apiFinalizeDraft
+} from '../api-frontend/events_drafts'
 
 export const useEventsStore = defineStore('events', {
   state: () => ({
@@ -20,6 +25,7 @@ export const useEventsStore = defineStore('events', {
     participantsByEvent: {},
     userEvents: [],
     currentUsername: null,
+    userProfile: null
   }),
 
   actions: {
@@ -183,6 +189,46 @@ export const useEventsStore = defineStore('events', {
       }
     },
 
+    async fetchUserProfile() {
+      try {
+        const authStore = useAuthStore()
+        const token = authStore.token
+        if (!token || token === 'null') {
+          console.error('Токен отсутствует!')
+          return null
+        }
+        
+        const profile = await fetchUserProfile(token)
+        this.userProfile = profile
+        console.log('profile: ', profile, this.userProfile)
+        return profile
+      } catch (error) {
+        console.error('Ошибка при загрузке профиля:', error)
+        this.error = error.message
+        return null
+      }
+    },
+
+    async voteForDraft(draftId, voteData) {
+      try {
+        const authStore = useAuthStore()
+        const token = authStore.token
+        await apiVoteForDraft(token, draftId, voteData)
+      } catch (err) {
+        throw new Error(err.message || 'Ошибка при голосовании за черновик')
+      }
+    },
+
+    async finalizeDraft(draftId) {
+      try {
+        const authStore = useAuthStore()
+        const token = authStore.token
+        return await apiFinalizeDraft(token, draftId)
+      } catch (err) {
+        throw new Error(err.message || 'Ошибка при финализации черновика')
+      }
+    },
+
     selectFriend(friend) {
       // Если друг уже выбран — сбрасываем фильтр
       if (this.selectedFriend && this.selectedFriend.id === friend.id) {
@@ -223,6 +269,7 @@ export const useEventsStore = defineStore('events', {
     selectedFriendName: (state) => state.selectedFriend?.name || null,
     getParticipantsByEvent: (state) => (eventId) => {
       return state.participantsByEvent[eventId] || []
-    }
+    },
+    getUserProfile: (state) => state.userProfile
   }
 })

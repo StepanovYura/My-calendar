@@ -7,10 +7,11 @@ import {
   getGroupDetail,
   joinGroup,
   leaveGroup,
-  inviteToGroup
+  inviteToGroup,
+  getGroupSchedule
 } from '../api-frontend/groups'
-
 import { useAuthStore } from './authStore'
+import { createEventDraft } from '../api-frontend/events_drafts'
 
 export const useGroupsStore = defineStore('groups', {
   state: () => ({
@@ -123,6 +124,32 @@ export const useGroupsStore = defineStore('groups', {
         await inviteToGroup(token, groupId, userId)
       } catch (err) {
         this.error = err.message || 'Ошибка при приглашении в группу'
+      }
+    },
+
+    async createDraft(draftData) {
+      try {
+        const authStore = useAuthStore()
+        const token = authStore.token
+
+        const response = await createEventDraft(token, draftData)
+        return response // Возвращаем, чтобы получить draft_id, если надо
+      } catch (err) {
+        this.error = err.message || 'Ошибка при создании черновика события'
+        throw err
+      }
+    },
+
+    async fetchGroupSchedule(groupId) {
+      try {
+        const authStore = useAuthStore()
+        const token = authStore.token
+
+        const events = await getGroupSchedule(token, groupId)
+        return events
+      } catch (err) {
+        this.error = err.message || 'Ошибка загрузки расписания'
+        throw err
       }
     }
   },

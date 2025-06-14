@@ -3,22 +3,158 @@
   <main class="container">
     <div class="views">
       <div class="choice-friend">
-        <div class="avatarka">Здесь должно быть фото или стандартное фото
-          <!-- <img src="" alt="avatar" id="avatar" width="100" height="200"> -->
+        <div class="avatarka">
+          <img :src="userProfile.avatar_url || defaultAvatar" alt="avatar" id="avatar" width="100" height="100" />
         </div>
-        <div class="nick">Здесь должен быть никнейм</div>
-        <button type="button" id="profile-color-btn" class="color-btn"><p>цветовая палитра</p></button>
-        <button type="button" id="settings" class="settings-btn"><p>редактирование профиля</p></button>        
+        <div class="nick">{{ userProfile.name }}</div>
+        <button type="button" class="settings-btn" @click="openSettings">
+          Редактирование профиля
+        </button>
       </div>
+
       <div class="calendary">
-        <p>Заглушка, постараться реализовать здесь мотивирующие сообщения на каждый день</p>
+        <h3>Шутка дня</h3>
+        <p class="joke-text">{{ currentJoke }}</p>
+      </div>
+    </div>
+
+    <!-- Модалка настроек профиля -->
+    <div v-if="showSettingsModal" class="modal-overlay" @click.self="closeSettings">
+      <div class="modal-content">
+        <h3>Редактирование профиля</h3>
+
+        <input type="text" v-model="editName" placeholder="Новый никнейм" />
+        <input type="password" v-model="newPassword" placeholder="Новый пароль" />
+        <select v-model="newPrivacy">
+          <option value="all">Все видят расписание</option>
+          <option value="none">Никто не видит расписание</option>
+        </select>
+
+        <input type="file" @change="onAvatarChange" />
+
+        <div class="modal-buttons">
+          <button @click="submitProfileUpdate">Сохранить</button>
+          <button @click="closeSettings">Отмена</button>
+        </div>
       </div>
     </div>
   </main>
-  <footer>
-    <p>Пока заглушка</p>
-  </footer>
 </template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useAuthStore } from '../stores/authStore'
+import { fetchUserProfile, updateUserProfile } from '../api-frontend/user'
+
+const authStore = useAuthStore()
+const userProfile = ref({})
+const defaultAvatar = '/default-avatar.png'  // путь к дефолтной аватарке
+
+const showSettingsModal = ref(false)
+const editName = ref('')
+const newPassword = ref('')
+const newPrivacy = ref('all')
+const newAvatarFile = ref(null)
+
+const jokes = [
+  "Почему программисты путают Хэллоуин и Рождество? Потому что OCT 31 == DEC 25.",
+  "В чём разница между программистом и пользователем? Программист говорит: «Это не баг, это фича».",
+  "99 маленьких багов в коде, 99 багов в коде... Поправил один, 127 багов в коде.",
+  "Как программисты поздравляют друг друга? С Новым Release’ом!",
+  "Поставил задачу на завтра. На всякий случай открыл пиво сегодня.",
+  "Почему Java-разработчики носят очки? Потому что они не C#.",
+  "Хороший код как шутка — не нужно объяснять.",
+  "Frontend без багов как единорог — говорят, существует, но никто не видел.",
+  "Git commit — лучший дневник программиста.",
+  "«Работает? Не трогай!» — главный закон IT.",
+  "Программисты спят, когда идёт билд.",
+  "Не злите программиста: он может удалить production одной строкой.",
+  "Алгоритмы — это способ решить проблему, которую вы даже не знали, что имеете.",
+  "Сломалось? Перезапусти. Почти всегда помогает.",
+  "Программист написал тесты. Тесты не прошли. Программист уволился.",
+  "Как программисты называют обед? Перерыв на компиляцию.",
+  "Любой проект можно закончить вовремя. Нужно только начать его позже.",
+  "Есть два типа программистов: те, кто делает бэкапы, и те, кто будет делать бэкапы.",
+  "Почему программисты не любят природу? В ней слишком много багов.",
+  "Мир делится на тех, кто понимает двоичную систему, и тех, кто нет.",
+  "Почему программисты любят тёмную тему? Потому что светлая вызывает баги.",
+  "Ctrl+C, Ctrl+V — суперспособность современного программиста.",
+  "Работа программиста: 10% — писать код, 90% — гуглить.",
+  "Почему разработчики не плачут? Потому что в console.log нет эмоций.",
+  "«Сейчас всё поправлю» — сказал программист и ушёл в отпуск.",
+  "Commit early, commit often, commit nonsense.",
+  "Никогда не бойся удалить что-то ненужное. Git всё запомнит.",
+  "Debugging — это как быть детективом в запутанном фильме, где ты же его и написал.",
+  "Рабочее место программиста: компьютер, кофе, отчаяние.",
+  "Пишу код с комментариями. Комментарии потом удалю, чтобы было загадочнее.",
+  "Почему твой проект не запущен? — Потому что билд идёт.",
+  "Программисты не ругаются, они просто называют переменные.",
+  "Почему код никогда не бывает идеальным? Потому что всегда можно его улучшить... и сломать.",
+  "if (пятница) { deploy(); } // лучший план.",
+  "Хуже багов могут быть только баги в пятницу вечером.",
+  "На собеседовании: — Ваш самый большой успех? — Мой код с первого раза заработал.",
+  "Почему программисты любят кошек? Потому что они тоже не реагируют на команды.",
+  "Код — это как поэзия. Только без рифмы. И с багами.",
+  "Если код не работает, добавь комментарий // todo fix later",
+  "Пишу код как художник. Никто не понимает, но красиво.",
+  "Что такое хороший код? — Тот, который не приходится читать.",
+  "Есть два состояния кода: «ещё не работает» и «уже не работает».",
+  "Зачем нужны тесты? Чтобы понять, насколько плохо написан код.",
+  "Программист — это человек, который находит проблему там, где её не было, и решает её так, что никто больше не разберётся.",
+  "Почему программисты любят понедельники? Потому что никто не трогает на выходных production.",
+  "Программист без багов — как понедельник без кофе.",
+  "Junior: «Почему мой код не работает?» Senior: «Почему он вообще работает?»",
+  "Программирование — это как готовка: если что-то не получается, добавь больше соли... ой, логов.",
+  "Только программист понимает, что значит «работает на моей машине».",
+  "Мечта программиста — писать код, который не нужно поддерживать. Реальность — багфиксы по ночам."
+]
+
+const currentJoke = computed(() => {
+  const day = new Date().getDate()
+  const randomIndex = (day + jokes.length * Math.random()) % jokes.length
+  return jokes[Math.floor(randomIndex)]
+})
+
+async function loadProfile() {
+  userProfile.value = await fetchUserProfile(authStore.token)
+  editName.value = userProfile.value.name
+  newPrivacy.value = userProfile.value.privacy_setting
+}
+
+function openSettings() {
+  showSettingsModal.value = true
+}
+
+function closeSettings() {
+  showSettingsModal.value = false
+}
+
+function onAvatarChange(event) {
+  newAvatarFile.value = event.target.files[0]
+}
+
+async function submitProfileUpdate() {
+  const formData = new FormData()
+  formData.append('name', editName.value)
+  formData.append('privacy_setting', newPrivacy.value)
+  if (newPassword.value) {
+    formData.append('password', newPassword.value)
+  }
+  if (newAvatarFile.value) {
+    formData.append('avatar', newAvatarFile.value)
+  }
+
+  await updateUserProfile(authStore.token, formData)
+  alert('Профиль обновлен')
+  closeSettings()
+  await loadProfile()
+}
+
+onMounted(() => {
+  loadProfile()
+})
+</script>
+
 
 <style scoped>
 body {
@@ -123,7 +259,7 @@ body {
 
 .match-btn {
   color: #333;
-  background-color: rgb(209, 204, 204);
+  background-color: rgb(207, 43, 43);
   min-height: 40px;
   min-width: 120px;
 }
@@ -181,5 +317,39 @@ footer {
     padding-left: 20px;
 }
 
+.avatarka img {
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.joke-text {
+  font-style: italic;
+  margin-top: 1rem;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.settings-btn {
+    background-color: blue;
+}
 
 </style>

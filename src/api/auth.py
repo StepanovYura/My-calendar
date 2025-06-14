@@ -86,5 +86,6 @@ class CheckAuth(Resource):
         return {
             "authenticated": True,
             "user_id": user.id,
-            "is_admin": user.role == 'admin'
+            "is_admin": user.role == 'admin',
+            # 'user': user
         }

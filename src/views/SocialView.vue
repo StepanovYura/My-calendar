@@ -50,14 +50,22 @@
           <h3>Ваши группы:</h3>
           <div class="group-list">
             <div class="group-card" v-for="group in groupsStore.groups" :key="group.id">
-              <router-link :to="`/group/${group.id}`" class="group-info">
+              <div class="group-info">
                 {{ group.name }}
-              </router-link>
+              </div>
               <div class="group-actions">
-                <button @click="createDraft(group.id)">Создать черновик</button>
-                <button v-if="group.created_by === currentUserId" @click="editGroup(group)">Редактировать</button>
+                <router-link :to="`/create-draft/${group.id}`">
+                  <button>Создать черновик</button>
+                </router-link>
+                <router-link v-if="group.created_by === currentUser.id" :to="`/groups/${group.id}/edit`">
+                  <button>Редактировать</button>
+                </router-link>
+                <button @click="openGroupInfo(group)">Информация</button>
+                <button @click="openInvite(group)">Пригласить</button>
+                <button @click="openVoting(group)">Голосования</button>
+                <button @click="openSchedule(group)">Расписание</button>
                 <button
-                  v-if="group.created_by === currentUserId"
+                  v-if="group.created_by === currentUser.id"
                   @click="deleteGroup(group)"
                   class="delete-btn"
                 >Удалить</button>
@@ -82,9 +90,129 @@
           </div>
         </div>
 
-        <button type="button" id="add-event-button">
+        <button type="button" id="add-event-button" @click="openAddModal">
           <img src="../assets/append-light-96.png" alt="Добавить" width="60" height="60">
         </button>
+      </div>
+    </div>
+
+    <!-- Модалка информации о группе -->
+    <div v-if="showGroupInfoModal" class="modal">
+      <div class="modal-content">
+        <h3>Информация о группе</h3>
+        <img
+          v-if="selectedGroup?.avatar_url"
+          :src="selectedGroup.avatar_url"
+          alt="Аватарка группы"
+          style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px"
+        />
+        <p><strong>Название:</strong> {{ selectedGroup?.name }}</p>
+        <p><strong>Описание:</strong> {{ selectedGroup?.description || '—' }}</p>
+        <p><strong>Создатель:</strong> {{ selectedGroup?.creator_name || '—' }}</p>
+        <p><strong>Участники:</strong></p>
+        <ul>
+          <li v-for="member in selectedGroup?.members" :key="member.user_id">
+            {{ member.user_name }} (ID: {{ member.user_id }}) — вступил: {{ new Date(member.joined_at).toLocaleDateString() }}
+          </li>
+        </ul>
+        <button @click="showGroupInfoModal = false">Закрыть</button>
+      </div>
+    </div>
+
+    <!-- Модалка приглашения -->
+    <div v-if="showInviteModal" class="modal">
+      <div class="modal-content">
+        <h3>Пригласить в группу "{{ selectedGroup?.name }}"</h3>
+        <input type="text" placeholder="Имя пользователя или email" v-model="inviteUsername" />
+        <div class="modal-buttons">
+          <button @click="sendInvite">Отправить</button>
+          <button @click="showInviteModal = false">Назад</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Модалка голосований -->
+    <div v-if="showVotingModal" class="modal">
+      <div class="modal-content">
+        <h3>Голосования в группе "{{ selectedGroup?.name }}"</h3>
+        <ul v-if="groupsStore.groupDetails?.drafts?.length">
+          <li v-for="draft in groupsStore.groupDetails.drafts" :key="draft.id">
+            <a href="#" @click.prevent="openDraftVote(draft)">{{ draft.title }}</a>
+          </li>
+        </ul>
+        <p v-else>Нет активных голосований</p>
+        <button @click="showVotingModal = false">Закрыть</button>
+      </div>
+    </div>
+
+    <!-- Модалка голосования -->
+    <div v-if="showVoteModal" class="modal">
+      <div class="modal-content">
+        <h3>Хотите ли вы участвовать в "{{ selectedDraft?.title }}"?</h3>
+        <p>Дата: {{ new Date(selectedDraft?.created_at).toLocaleDateString() }}</p>
+        <button @click="voteYes">Да</button>
+        <button @click="voteNo">Нет</button>
+        <button @click="showVoteModal = false">Назад</button>
+      </div>
+    </div>
+
+    <!-- Модалка ввода слотов -->
+    <div v-if="showSlotsModal" class="modal">
+      <div class="modal-content">
+        <h3>Укажите свои слоты для "{{ selectedDraft?.title }}"</h3>
+        <div v-for="(slot, index) in voteSlots" :key="index" class="slot-row">
+          <input type="time" v-model="slot.start" required />
+          <input type="time" v-model="slot.end" required />
+          <button @click.prevent="removeSlot(index)">Удалить</button>
+        </div>
+        <button @click.prevent="addSlot">Добавить слот</button>
+        <button @click="submitVoteWithSlots">Отправить</button>
+        <button @click="showSlotsModal = false">Отмена</button>
+      </div>
+    </div>
+
+    <!-- Модалка расписания -->
+    <div v-if="showGroupScheduleModal" class="modal">
+      <div class="modal-content">
+        <h3>События группы "{{ selectedGroup?.name }}"</h3>
+        <ul v-if="groupSchedule.length">
+          <li v-for="event in groupSchedule" :key="event.id">
+            <strong>{{ event.title }}</strong> —
+            {{ new Date(event.date_time).toLocaleString() }} ({{ event.duration_minutes }} мин)
+            <div v-if="event.description">{{ event.description }}</div>
+          </li>
+        </ul>
+        <p v-else>Нет событий</p>
+        <button @click="showGroupScheduleModal = false">Закрыть</button>
+      </div>
+    </div>
+
+    <!-- Модалка выбора действия при добавлении -->
+    <div v-if="showAddModal" class="modal-overlay" @click.self="closeAddModal">
+      <div class="modal-content">
+        <h3>Что вы хотите сделать?</h3>
+        <div class="modal-buttons">
+          <button class="modal-my" @click="openAddFriend">Добавить друга</button>
+          <router-link to="/create-event">
+            <button class="modal-my">Создать событие</button>
+          </router-link>
+          <router-link to="/create-group">
+            <button class="modal-my">Создать группу</button>
+          </router-link>
+        </div>
+        <button class="close-btn" @click="closeAddModal">Назад</button>
+      </div>
+    </div>
+
+    <!-- Модалка добавления друга -->
+    <div v-if="showAddFriendModal" class="modal-overlay" @click.self="closeAddFriendModal">
+      <div class="modal-content">
+        <h3>Добавить друга</h3>
+        <input type="text" v-model="friendSearchQuery" placeholder="Имя пользователя или email" />
+        <div class="modal-buttons">
+          <button class="modal-my" @click="sendFriendRequest">Отправить запрос</button>
+          <button class="modal-my" @click="closeAddFriendModal">Назад</button>
+        </div>
       </div>
     </div>
   </main>
@@ -95,22 +223,187 @@
 
 <script setup>
 import { useEventsStore } from '../stores/eventsStore'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useGroupsStore } from '../stores/groupsStore'
+import { getGroupDetail } from '../api-frontend/groups'
+import { searchUsers } from '../api-frontend/user'
 
 const groupsStore = useGroupsStore()
 const eventsStore = useEventsStore()
 const showEvents = ref(true)
 const showFriends = ref(false)
 const showGroups = ref(false)
-const currentUserId = useEventsStore().currentUser?.id || null // если есть
+const currentUser = computed(() => eventsStore.userProfile)
+const showGroupInfoModal = ref(false)
+const showInviteModal = ref(false)
+const showVotingModal = ref(false)
+const showGroupScheduleModal = ref(false)
+const selectedGroup = ref(null)
+const inviteUsername = ref('')
+const selectedDraft = ref(null)
+const showVoteModal = ref(false)
+const showSlotsModal = ref(false)
+const voteSlots = ref([])
+const groupSchedule = ref([])
+const showAddModal = ref(false)
+const showAddFriendModal = ref(false)
+const friendSearchQuery = ref('')
 
-const createDraft = (groupId) => {
-  alert(`Создание черновика в группе #${groupId}`)
+const openAddModal = () => {
+  showAddModal.value = true
 }
 
-const editGroup = (group) => {
-  alert(`Редактировать группу: ${group.name}`)
+const closeAddModal = () => {
+  showAddModal.value = false
+}
+
+const openAddFriend = () => {
+  showAddModal.value = false
+  showAddFriendModal.value = true
+}
+
+const closeAddFriendModal = () => {
+  showAddFriendModal.value = false
+}
+
+const sendFriendRequest = async () => {
+  const query = friendSearchQuery.value.trim()
+  if (!query) {
+    alert('Введите имя пользователя или email')
+    return
+  }
+
+  try {
+    const token = localStorage.getItem('token')
+    const results = await searchUsers(token, query)
+
+    if (!results.length) {
+      alert('Пользователь не найден')
+      return
+    }
+
+    const user = results[0]
+
+    await eventsStore.sendFriendRequest(user.id)
+    alert(`Запрос дружбы отправлен пользователю ${user.name}`)
+    closeAddFriendModal()
+    friendSearchQuery.value = ''
+  } catch (err) {
+    alert('Ошибка при отправке запроса: ' + err.message)
+  }
+}
+
+const addSlot = () => {
+  voteSlots.value.push({ start: '', end: '' })
+}
+
+const removeSlot = (index) => {
+  voteSlots.value.splice(index, 1)
+}
+
+const submitVoteWithSlots = async () => {
+  try {
+    const slotsData = voteSlots.value.map(slot => ({
+      start: `${selectedDraft.value.date_time.split('T')[0]}T${slot.start}`,
+      end: `${selectedDraft.value.date_time.split('T')[0]}T${slot.end}`
+    }))
+    await eventsStore.voteForDraft(selectedDraft.value.id, {
+      consent: true,
+      slots: slotsData
+    })
+
+    alert("Ваш голос учтён")
+    showSlotsModal.value = false
+  } catch (err) {
+    alert("Ошибка: " + err.message)
+  }
+}
+
+const voteYes = () => {
+  showVoteModal.value = false
+  showSlotsModal.value = true
+  voteSlots.value = [{ start: '', end: '' }]  // начальный слот
+}
+
+const voteNo = async () => {
+  try {
+    await eventsStore.voteForDraft(selectedDraft.value.id, { consent: false })
+    alert("Ваш голос ПРОТИВ учтён")
+    showVoteModal.value = false
+  } catch (err) {
+    alert("Ошибка: " + err.message)
+  }
+}
+
+const openGroupInfo = async (group) => {
+  const token = localStorage.getItem('token')
+  const detailedGroup = await groupsStore.fetchGroupDetail(group.id)
+  selectedGroup.value = groupsStore.groupDetails
+  showGroupInfoModal.value = true
+}
+
+const openInvite = (group) => {
+  selectedGroup.value = group
+  showInviteModal.value = true
+}
+
+const openVoting = async (group) => {
+  selectedGroup.value = group
+  await groupsStore.fetchGroupDetail(group.id)  // чтобы получить актуальные голосования
+  showVotingModal.value = true
+}
+
+const openSchedule = async (group) => {
+  try {
+    selectedGroup.value = group
+    groupSchedule.value = await groupsStore.fetchGroupSchedule(group.id)
+    showGroupScheduleModal.value = true
+  } catch (err) {
+    alert('Ошибка загрузки расписания: ' + err.message)
+  }
+}
+
+const openDraftVote = (draft) => {
+  selectedDraft.value = draft
+
+  const userId = currentUser.value?.id
+  const consent = draft.consents?.find(c => c.user_id === userId)
+
+  if (draft.created_by === userId) {
+    alert("Вы создали этот черновик, ждите завершения голосования")
+  } else if (consent && consent.consent) {
+    alert("Вы уже проголосовали, ждите завершения голосования")
+  } else {
+    showVoteModal.value = true
+  }
+}
+
+const sendInvite = async () => {
+  const query = inviteUsername.value.trim()
+  if (!query) {
+    alert('Введите имя пользователя или email')
+    return
+  }
+
+  try {
+    const token = localStorage.getItem('token')
+    const results = await searchUsers(token, query)
+
+    if (!results.length) {
+      alert('Пользователь не найден')
+      return
+    }
+
+    const user = results[0] // Берём первого из найденных
+
+    await groupsStore.inviteUser(selectedGroup.value.id, user.id)
+
+    alert(`Приглашение отправлено пользователю ${user.name}`)
+    showInviteModal.value = false
+    inviteUsername.value = ''
+  } catch (err) {
+    alert('Ошибка при отправке приглашения: ' + err.message)
+  }
 }
 
 const deleteGroup = async (group) => {
@@ -149,6 +442,7 @@ const loadFriends = async () => {
     await eventsStore.fetchFriends()
     showFriends.value = true
     showEvents.value = false // чтобы не дублировалось с событиями
+    showGroups.value = false
   }
 }
 
@@ -159,6 +453,7 @@ const loadEvents = async () => {
     await eventsStore.fetchUserEvents()
     showEvents.value = true // Показываем, если был скрыт
     showFriends.value = false
+    showGroups.value = false
   }
 }
 
@@ -187,6 +482,7 @@ onMounted(async () => {
   await eventsStore.fetchUserEvents()
   await groupsStore.fetchGroups()
   await eventsStore.fetchFriends()
+  eventsStore.fetchUserProfile()
 })
 
 </script>
@@ -537,4 +833,60 @@ footer {
   background-color: #e05252;
 }
 
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 8px;
+  max-width: 90%;
+  width: 400px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.modal-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.close-btn {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  background-color: #2a7ae2;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.modal-my {
+  width: 100%;
+  background-color: #2a7ae2
+}
 </style>
