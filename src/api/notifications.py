@@ -9,6 +9,7 @@ from flask_mail import Message
 # Общая функция для создания уведомления
 def create_notification(receiver_id, message, type, sender_id='system', 
                        event_id=None, group_id=None, event_draft_id=None):
+    print(f"Попытка создать уведомление для {receiver_id}")
     notification = Notification(
         receiver_id=receiver_id,
         sender_id=sender_id,
@@ -19,19 +20,20 @@ def create_notification(receiver_id, message, type, sender_id='system',
         event_draft_id=event_draft_id
     )
     db.session.add(notification)
-    
-    # Отправка email
-    user = db.session.get(User, receiver_id)
-    if user and user.email:
-        msg = Message(
-            subject="Новое уведомление",
-            sender=current_app.config['MAIL_USERNAME'],
-            recipients=[user.email],
-            body=message
-        )
-        mail.send(msg) # либо закоментить либо исправлять, подробности в app.py
+    print("Уведомление добавлено в сессию")
+    # # Отправка email
+    # user = db.session.get(User, receiver_id)
+    # if user and user.email:
+    #     msg = Message(
+    #         subject="Новое уведомление",
+    #         sender=current_app.config['MAIL_USERNAME'],
+    #         recipients=[user.email],
+    #         body=message
+    #     )
+    #     mail.send(msg) # либо закоментить либо исправлять, подробности в app.py
     
     db.session.commit()
+    print("Уведомление сохранено в БД")
 
 # 1. Уведомление о заявке в друзья
 def notify_friend_request(receiver_id):
@@ -97,7 +99,7 @@ def notify_added_to_event(event_id, user_id):
     create_notification(
         receiver_id=user_id,
         message=message,
-        type='invitation',
+        type='result',
         sender_id=int(get_jwt_identity()),
         event_id=event_id,
         group_id=event.group_id

@@ -26,7 +26,9 @@
               <button @click="toggleRead(note)">
                 {{ note.read_status ? 'Не прочитано' : 'Прочитано' }}
               </button>
-              <button v-if="note.type === 'invitation'" @click="openRespondModal(note)">
+              <button 
+                v-if="note.type === 'invitation' && (note.group_id !== null || note.friend_request_id !== null)" 
+                @click="openRespondModal(note)">
                 Ответить
               </button>
             </div>
@@ -316,6 +318,7 @@ body {
   background-color: rgb(209, 204, 204);
   min-height: 40px;
   min-width: 120px;
+  background-color: black;
 }
 
 #range-select {
@@ -385,10 +388,6 @@ footer {
   background-color: #f0f0f0;
 }
 
-.note-actions button {
-  margin-right: 0.5rem;
-}
-
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
@@ -406,20 +405,6 @@ footer {
   width: 400px;
   max-width: 90%;
 }
-
-.modal-buttons {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.filter-btn {
-  margin-bottom: 0.5rem;
-  padding: 0.5rem 1rem;
-
-  
-}
-
 
 .notification-list {
   list-style: none;
@@ -439,6 +424,7 @@ footer {
 
 .note-actions button {
   margin-right: 0.5rem;
+  background-color: black;
 }
 
 .modal-overlay {
@@ -463,11 +449,13 @@ footer {
   display: flex;
   gap: 1rem;
   margin-top: 1rem;
+  background-color: black;
 }
 
 .filter-btn {
   margin-bottom: 0.5rem;
   padding: 0.5rem 1rem;
+  background-color: black;
 }
 
 .spinner {

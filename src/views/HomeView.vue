@@ -13,7 +13,7 @@
       </form>
       <div class="view-choice">
         <div class="week-scroll">
-          <button @click="goToPreviousWeek">←</button>
+          <button class="scroll-btn" @click="goToPreviousWeek">←</button>
           <div class="week-days">
             <div
               v-for="(day, index) in weekDays"
@@ -24,7 +24,7 @@
               {{ day.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric' }) }}
             </div>
           </div>
-          <button @click="goToNextWeek">→</button>
+          <button class="scroll-btn" @click="goToNextWeek">→</button>
         </div>
       </div>
     </div>
@@ -107,8 +107,12 @@
       </div>
     </div>
   </main>
-  <footer>
-    <p>Пока заглушка</p>
+  <footer class="app-footer">
+    <div class="footer-content">
+      <p>Телефон: +7 (916) 256-03-04</p>
+      <p>Telegram: <a href="https://t.me/@YuRcHiCkNova" target="_blank">@YuRcHiCkNova</a></p>
+      <p>Email: <a href="mailto:yurastep05@gmail.com">yurastep05@gmail.com</a></p>
+    </div>
   </footer>
 
     <!-- Модальное окно -->
@@ -130,7 +134,8 @@
       <p><strong>Описание:</strong> {{ selectedEvent?.description || 'нет' }}</p>
       <p><strong>Время начала:</strong> {{ new Date(selectedEvent?.date_time).toLocaleString('ru-RU') }}</p>
       <p><strong>Длительность:</strong> {{ selectedEvent?.duration_minutes }} минут</p>
-
+      <p v-if="selectedEvent?.group_name"><strong>Группа:</strong> {{ selectedEvent.group_name }}</p>
+      <p v-if="selectedEvent?.friend_name"><strong>С другом:</strong> {{ selectedEvent.friend_name }}</p>
       <router-link :to="`/edit-event/${selectedEvent?.id}`">
         <button class="edit-btn">Редактировать</button>
       </router-link>
@@ -268,14 +273,15 @@ const SLOT_HEIGHT = 50
 
 function getEventStyle(event, isFriend = false) {
   const start = new Date(event.date_time)
-  const startHour = start.getHours()
-  const startMinutes = start.getMinutes()
+  const startHour = 23
+  const startMinutes = 0
 
   const topOffset = ((startHour - 8) + startMinutes / 60) * SLOT_HEIGHT
-  const height = (event.duration_minutes / 60) * SLOT_HEIGHT
+  const height = Math.max(20, (event.duration_minutes / 60) * SLOT_HEIGHT) // min 20px height
+  // const height = (event.duration_minutes / 60) * SLOT_HEIGHT
 
   // Если фильтр по другу включён — делим пространство пополам
-  const width = eventsStore.selectedFriend ? '50%' : '100%'
+  const width = eventsStore.selectedFriend ? '50%' : '100%' // НУЖНО ПРАВИТЬ СТИЛИ
   const left = isFriend ? '50%' : '0'
 
   return {
@@ -283,6 +289,7 @@ function getEventStyle(event, isFriend = false) {
     height: `${height}px`,
     width,
     left,
+    right: `20px`,
     position: 'absolute'
   }
 }
@@ -473,6 +480,9 @@ body {
     background-color: white;
     border-radius: 4px;
     box-shadow: 0 0 1px 1px rgba(0, 0, 0, 0.3);
+
+    margin: 0 auto;
+    position: relative;
 }
 
 .week-scroll {
@@ -523,19 +533,27 @@ body {
   flex: 1;
   position: relative;
   height: 50px; /* каждый час — 50px высоты */
-  padding-left: 1rem;
-  /* min-height: 100%; */
+  /* padding-left: 1rem; */
+  border-bottom: 1px solid #ccc;
 }
 
 .event {
-  position: absolute;
+  /* position: absolute;
   left: 0;
   right: 0;
   padding: 4px;
   background-color: #dcedc8;
   border-radius: 4px;
-  z-index: 1;
-  /* min-height: 100%; */
+  z-index: 1; */
+  
+  position: absolute;
+  left: 0;
+  background-color: #dcedc8;
+  border: 1px solid #a5d6a7;
+  border-radius: 4px;
+  padding: 2px 4px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .event-modle {
@@ -552,12 +570,40 @@ body {
   margin: 0;
   cursor: pointer;
   outline: none;
+  z-index: 1000000;
   /* opacity: 0.4; */
 }
 
+
 footer {
-    min-height: 90px;
-    padding-left: 20px;
+  min-height: 60px;
+  max-height: 90px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.footer-content {
+  text-align: center;
+  width: 100%;
+  font-size: 0.9rem;
+  color: #555;
+  display: flex;
+  flex-direction: row;
+  align-items:baseline;
+  justify-content: space-around;
+  border-radius: 20%;
+  border-color: #333;
+}
+
+.footer-content a {
+  color: #007BFF;
+  text-decoration: none;
+}
+
+.footer-content a:hover {
+  text-decoration: underline;
 }
 
 .week-schedule {
@@ -646,6 +692,20 @@ footer {
 .close-btn {
   background-color: #aaa;
   margin-left: 0.5rem;
+}
+
+.scroll-btn {
+  background-color: black;
+}
+
+@media (max-width: 768px) {
+  .calendary {
+    max-width: 100%;
+  }
+  .event {
+    font-size: 0.8rem;
+    padding: 1px 2px;
+  }
 }
 
 </style>

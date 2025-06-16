@@ -28,7 +28,7 @@
                     {{
                       eventsStore
                         .getParticipantsByEvent(event.id)
-                        .find(p => p.username !== eventsStore.currentUsername)?.username
+                        .find(p => p.name !== eventsStore.currentUsername)?.name
                     }}
                   </span>
                   <!-- Показываем, если событие связано с группой -->
@@ -83,7 +83,7 @@
           <div class="friend-list">
             <div class="friend-card" v-for="friend in eventsStore.friends" :key="friend.id">
               <div class="friend-info">
-                {{ friend.name }} ({{ friend.username }})
+                {{ friend.name }}
               </div>
               <button class="remove-btn" @click="removeFriend(friend)">Удалить</button>
             </div>
@@ -216,8 +216,12 @@
       </div>
     </div>
   </main>
-  <footer>
-    <p>Пока заглушка</p>
+  <footer class="app-footer">
+    <div class="footer-content">
+      <p>Телефон: +7 (916) 256-03-04</p>
+      <p>Telegram: <a href="https://t.me/@YuRcHiCkNova" target="_blank">@YuRcHiCkNova</a></p>
+      <p>Email: <a href="mailto:yurastep05@gmail.com">yurastep05@gmail.com</a></p>
+    </div>
   </footer>
 </template>
 
@@ -289,7 +293,8 @@ const sendFriendRequest = async () => {
     closeAddFriendModal()
     friendSearchQuery.value = ''
   } catch (err) {
-    alert('Ошибка при отправке запроса: ' + err.message)
+    console.error('Ошибка при отправке запроса:', err)
+    alert('Ошибка при отправке запроса: ' + JSON.stringify(err))
   }
 }
 
@@ -646,9 +651,36 @@ body {
 }
 
 footer {
-    min-height: 90px;
-    padding-left: 20px;
+  min-height: 60px;
+  max-height: 90px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+
+.footer-content {
+  text-align: center;
+  width: 100%;
+  font-size: 0.9rem;
+  color: #555;
+  display: flex;
+  flex-direction: row;
+  align-items:baseline;
+  justify-content: space-around;
+  border-radius: 20%;
+  border-color: #333;
+}
+
+.footer-content a {
+  color: #007BFF;
+  text-decoration: none;
+}
+
+.footer-content a:hover {
+  text-decoration: underline;
+}
+
 
 .event-list {
   display: flex;

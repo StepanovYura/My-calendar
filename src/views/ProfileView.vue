@@ -23,22 +23,41 @@
       <div class="modal-content">
         <h3>Редактирование профиля</h3>
 
-        <input type="text" v-model="editName" placeholder="Новый никнейм" />
-        <input type="password" v-model="newPassword" placeholder="Новый пароль" />
-        <select v-model="newPrivacy">
-          <option value="all">Все видят расписание</option>
-          <option value="none">Никто не видит расписание</option>
-        </select>
+        <div class="form-group">
+          <label for="editName">Новый никнейм</label>
+          <input type="text" id="editName" v-model="editName" placeholder="Новый никнейм" />
+        </div>
 
-        <input type="file" @change="onAvatarChange" />
+        <div class="form-group">
+          <label for="newPrivacy">Настройки приватности</label>
+          <select id="newPrivacy" v-model="newPrivacy">
+            <option value="all">Все видят расписание</option>
+            <option value="none">Никто не видит расписание</option>
+          </select>
+        </div>
 
+        <div class="form-group">
+          <label for="avatarUpload">Новая аватарка</label>
+          <input type="file" id="avatarUpload" @change="onAvatarChange" />
+        </div>
+        
+        <div class="form-group">
+          <RouterLink to="/changePswd" class="password-change-btn">Сменить пароль</RouterLink>
+        </div>
         <div class="modal-buttons">
-          <button @click="submitProfileUpdate">Сохранить</button>
-          <button @click="closeSettings">Отмена</button>
+          <button class="save-btn" @click="submitProfileUpdate">Сохранить</button>
+          <button class="cancel-btn" @click="closeSettings">Отмена</button>
         </div>
       </div>
     </div>
   </main>
+  <footer class="app-footer">
+    <div class="footer-content">
+      <p>Телефон: +7 (916) 256-03-04</p>
+      <p>Telegram: <a href="https://t.me/@YuRcHiCkNova" target="_blank">@YuRcHiCkNova</a></p>
+      <p>Email: <a href="mailto:yurastep05@gmail.com">yurastep05@gmail.com</a></p>
+    </div>
+  </footer>
 </template>
 
 <script setup>
@@ -313,8 +332,34 @@ body {
 }
 
 footer {
-    min-height: 90px;
-    padding-left: 20px;
+  min-height: 60px;
+  max-height: 90px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.footer-content {
+  text-align: center;
+  width: 100%;
+  font-size: 0.9rem;
+  color: #555;
+  display: flex;
+  flex-direction: row;
+  align-items:baseline;
+  justify-content: space-around;
+  border-radius: 20%;
+  border-color: #333;
+}
+
+.footer-content a {
+  color: #007BFF;
+  text-decoration: none;
+}
+
+.footer-content a:hover {
+  text-decoration: underline;
 }
 
 .avatarka img {
@@ -351,5 +396,51 @@ footer {
 .settings-btn {
     background-color: blue;
 }
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+}
+
+.form-group {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 0.3rem;
+  font-weight: bold;
+}
+
+.modal-buttons button,
+.password-change-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+}
+
+.save-btn {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.cancel-btn {
+  background-color: #f44336;
+  color: white;
+}
+
+.password-change-btn {
+  background-color: #2196F3;
+  color: white;
+}
+
 
 </style>

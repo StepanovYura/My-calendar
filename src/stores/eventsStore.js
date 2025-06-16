@@ -7,7 +7,7 @@ import {
   addParticipantToEvent as apiAddParticipantToEvent,
   getEventParticipants
 } from '../api-frontend/events'
-import { getFriendList, removeFriend as apiRemoveFriend } from '../api-frontend/friends'
+import { getFriendList, sendFriendRequest as apiSendFriendRequest, removeFriend as apiRemoveFriend } from '../api-frontend/friends'
 import { useAuthStore } from './authStore'
 import { fetchUserProfile } from '../api-frontend/user'
 import {
@@ -227,6 +227,16 @@ export const useEventsStore = defineStore('events', {
       } catch (err) {
         throw new Error(err.message || 'Ошибка при финализации черновика')
       }
+    },
+
+    async sendFriendRequest(userId) {
+      const authStore = useAuthStore()
+      const token = authStore.token
+      if (!token) {
+        throw new Error('Нет токена авторизации')
+      }
+
+      return await apiSendFriendRequest(token, userId)
     },
 
     selectFriend(friend) {

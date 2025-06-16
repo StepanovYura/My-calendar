@@ -10,22 +10,43 @@
       <div class="day-cell"
            v-for="(day, index) in calendarDays"
            :key="'cell-' + index"
-           :class="{ 'today': isToday(day.date), 'clickable': day.date }"
+           :class="{ 'today': isToday(day.date), 'clickable': day.date, 
+           'has-event': day.date && daysWithEvents.includes(`${day.date.getFullYear()}-${day.date.getMonth()}-${day.date.getDate()}`)
+           }"
            @click="day.date && openModal(day.date)">
         {{ day.day }}
       </div>
     </div>
 
-    <!-- Модальное окно -->
+    <!-- Модалка на день -->
     <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
       <div class="modal-content">
         <h3>События на {{ selectedDateFormatted }}</h3>
         <ul class="events-list">
-          <li v-if="events.length === 0">Нет событий</li>
-          <li v-for="(event, index) in events" :key="index">{{ event }}</li>
+          <li v-if="dayEvents.length === 0">Нет событий</li>
+          <li v-for="event in dayEvents" :key="event.id" @click="openEventModal(event)" class="clickable-event">
+            {{ event.title }}
+          </li>
         </ul>
         <router-link :to="{ path: '/create-event', query: { date: selectedDate.toISOString() } }" class="add-btn">Добавить событие</router-link>
         <button class="close-btn" @click="closeModal">Закрыть</button>
+      </div>
+    </div>
+
+    <!-- Модалка подробностей события -->
+    <div v-if="showEventModal" class="modal-overlay" @click.self="closeEventModal">
+      <div class="modal-content">
+        <h3>Событие: {{ selectedEvent?.title }}</h3>
+        <p><strong>Описание:</strong> {{ selectedEvent?.description || 'нет' }}</p>
+        <p><strong>Время начала:</strong> {{ new Date(selectedEvent?.date_time).toLocaleString('ru-RU') }}</p>
+        <p><strong>Длительность:</strong> {{ selectedEvent?.duration_minutes }} минут</p>
+        <p v-if="selectedEvent?.group_name"><strong>Группа:</strong> {{ selectedEvent.group_name }}</p>
+        <p v-if="selectedEvent?.friend_name"><strong>С другом:</strong> {{ selectedEvent.friend_name }}</p>
+
+        <router-link :to="`/edit-event/${selectedEvent?.id}`">
+          <button class="edit-btn">Редактировать</button>
+        </router-link>
+        <button class="close-btn" @click="closeEventModal">Закрыть</button>
       </div>
     </div>
   </div>
@@ -34,15 +55,19 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useEventsStore } from '../stores/eventsStore'
+
+const eventsStore = useEventsStore()
 
 const today = new Date()
 const currentMonth = ref(today.getMonth())
 const currentYear = ref(today.getFullYear())
 
 const showModal = ref(false)
+const showEventModal = ref(false)
 const selectedDate = ref(null)
-const events = ref([]) // Пока заглушка, позже будут реальные
-
+const selectedEvent = ref(null)
+const dayEvents = ref([])
 const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 
 const monthYearLabel = computed(() => {
@@ -80,6 +105,13 @@ function getCalendarDays(year, month) {
   return days
 }
 
+const daysWithEvents = computed(() => {
+  return eventsStore.events.map(e => {
+    const d = new Date(e.date_time)
+    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+  })
+})
+
 const calendarDays = computed(() => {
   return getCalendarDays(currentYear.value, currentMonth.value)
 })
@@ -112,12 +144,22 @@ function isToday(date) {
 
 function openModal(date) {
   selectedDate.value = date
-  events.value = ['Заглушка события 1', 'Заглушка события 2'] // потом будут реальные
+  dayEvents.value = eventsStore.eventsForDay(date)
   showModal.value = true
 }
 
 function closeModal() {
   showModal.value = false
+}
+
+function openEventModal(event) {
+  selectedEvent.value = event
+  console.log('event-info: ', event)
+  showEventModal.value = true
+}
+
+function closeEventModal() {
+  showEventModal.value = false
 }
 </script>
 
@@ -210,4 +252,14 @@ function closeModal() {
   background-color: #aaa;
   margin-left: 0.5rem;
 }
+
+.has-event {
+  background-color: yellow;
+}
+
+.clickable-event {
+  cursor: pointer;
+  padding: 4px;
+}
+
 </style>

@@ -43,20 +43,23 @@
           <img src="../assets/profile-light-48.png" alt="prof">
         </RouterLink>
       </div>
-      <button class="theme" @click="toggleTheme">
-        <span>Тема</span>
+      <button class="auth-btn" @click="handleAuthClick">
+        <span>{{ isAuthenticated ? 'Выйти' : 'Войти' }}</span>
       </button>
     </nav>
   </header>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/authStore'
 
 const currentDate = ref('')
 const router = useRouter()
 const searchDate = ref('')
+const authStore = useAuthStore()
+const isAuthenticated = computed(() => !!authStore.token)
 
 onMounted(() => {
   const date = new Date()
@@ -68,13 +71,27 @@ function searchByDate() {
   router.push({ path: '/', query: { date: searchDate.value } })
 }
 
-function toggleTheme() {
-  // Заглушка
-  alert('Смена темы пока не реализована')
+async function handleAuthClick() {
+  if (isAuthenticated.value) {
+    await authStore.logout()
+    router.push('/login')  // После выхода отправляем на страницу входа
+  } else {
+    router.push('/login')  // Просто переходим на страницу входа
+  }
 }
+
 </script>
 
 <style scoped>
+
+.auth-btn {
+  background-color: rgb(173, 173, 173);
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+}
+
 .navbar {
     display: flex;
     flex-direction: row;

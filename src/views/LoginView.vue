@@ -17,7 +17,7 @@
       <div class="form-group">
         <input 
           v-model="form.password" 
-          type="showPassword ? 'text' : 'password'" 
+          :type="showPassword ? 'text' : 'password'" 
           placeholder="PASSWORD"
           class="password-input"
           required

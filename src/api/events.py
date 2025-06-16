@@ -5,7 +5,7 @@ from datetime import datetime, date
 from flask_login import current_user, login_required
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from api.notifications import notify_event_participants, notify_added_to_event
-from models.models import Event, EventParticipant, User, Friend
+from models.models import Event, EventParticipant, User, Friend, Group
 
 #--------------------------GET_методы---------------------------
 
@@ -13,34 +13,30 @@ from models.models import Event, EventParticipant, User, Friend
 class UserEvents(Resource):
     @jwt_required()
     def get(self):
-        # 1. Определяем пользователя, чьи события надо получить
         user_id = request.args.get("user_id", type=int)
 
+        current_user_id = int(get_jwt_identity())
         if user_id is None:
-            user_id = int(get_jwt_identity())  # свои события
+            user_id = current_user_id
         else:
-            if user_id != int(get_jwt_identity()):
-                # Проверка, является ли запрошенный пользователь другом
+            if user_id != current_user_id:
                 friend = db.session.query(Friend).filter(
-                    ((Friend.sender_id == int(get_jwt_identity())) & (Friend.receiver_id == user_id) |
-                    (Friend.sender_id == user_id) & (Friend.receiver_id == int(get_jwt_identity()))) &
-                    (Friend.status == 'accepted')
+                    ((Friend.sender_id == current_user_id) & (Friend.receiver_id == user_id)) |
+                    ((Friend.sender_id == user_id) & (Friend.receiver_id == current_user_id)),
+                    Friend.status == 'accepted'
                 ).first()
 
                 if not friend:
                     return {"error": "Вы не можете просматривать события этого пользователя."}, 403
 
-                # Проверка приватности
                 target_user = db.session.get(User, user_id)
                 if not target_user or target_user.privacy_setting != 'all':
                     return {"error": "Этот пользователь ограничил доступ к своим событиям."}, 403
 
-        # 2. Фильтрация событий
         query = db.session.query(Event).join(EventParticipant).filter(
             EventParticipant.user_id == user_id
         )
 
-        # 3. Фильтры по дате
         def parse_range(param_from, param_to):
             try:
                 start = datetime.strptime(request.args.get(param_from), "%Y-%m-%d")
@@ -72,23 +68,44 @@ class UserEvents(Resource):
 
         events = query.all()
 
-        return [{
-            "id": e.id,
-            "group_id": e.group_id,
-            "title": e.title,
-            "description": e.description,
-            "date_time": e.date_time.isoformat(),
-            "duration_minutes": e.duration_minutes,
-            "event_type": e.event_type,
-            "status": e.status,
-        } for e in events]
+        results = []
+        for e in events:
+            group_name = None
+            if e.group_id:
+                group = db.session.get(Group, e.group_id)
+                group_name = group.name if group else None
+
+            friend_name = None
+            if not e.group_id:
+                participants = db.session.query(EventParticipant).filter_by(event_id=e.id).all()
+                other = next((p for p in participants if p.user_id != current_user_id), None)
+                if other:
+                    friend_user = db.session.get(User, other.user_id)
+                    friend_name = friend_user.name if friend_user else None
+
+            results.append({
+                "id": e.id,
+                "group_id": e.group_id,
+                "group_name": group_name,
+                "title": e.title,
+                "description": e.description,
+                "date_time": e.date_time.isoformat(),
+                "duration_minutes": e.duration_minutes,
+                "event_type": e.event_type,
+                "status": e.status,
+                "friend_name": friend_name
+            })
+
+        return results
+
 
 # Запрос конкретного события 
 class EventDetail(Resource):
     @jwt_required()
     def get(self, event_id):
         event = db.session.get(Event, event_id)
-        user = db.session.get(User, int(get_jwt_identity()))
+        user_id = int(get_jwt_identity())
+        user = db.session.get(User, user_id)
 
         if not event:
             return {"error": "Событие не найдено"}, 404
@@ -96,26 +113,47 @@ class EventDetail(Resource):
         # Проверка участия пользователя
         is_participant = db.session.query(EventParticipant).filter_by(
             event_id=event_id,
-            user_id=int(get_jwt_identity())
+            user_id=user_id
         ).first()
 
         if not is_participant and user.role != 'admin':
             return {"error": "Вы не являетесь участником этого события"}, 403
 
-        return [{
-            "id": e.id,
-            "title": e.title,
-            "description": e.description,
-            "date_time": e.date_time.isoformat(),
-            "duration_minutes": e.duration_minutes,
-            "status": e.status,
-            "group_id": e.group_id,
-            "event_draft_id": e.event_draft_id,
-            "created_at": e.created_at.isoformat(),
-            "created_by": e.created_by,
-            "event_type": e.event_type,
-            "color": e.color
-        } for e in event]
+        # Имя группы
+        group_name = None
+        if event.group_id:
+            group = db.session.get(Group, event.group_id)
+            group_name = group.name if group else None
+
+        # Имя друга (если событие с одним другом)
+        friend_name = None
+        if not event.group_id:
+            participants = db.session.query(EventParticipant).filter_by(event_id=event.id).all()
+            other_participant = next(
+                (p for p in participants if p.user_id != user_id),
+                None
+            )
+            if other_participant:
+                friend_user = db.session.get(User, other_participant.user_id)
+                friend_name = friend_user.name if friend_user else None
+
+        return {
+            "id": event.id,
+            "title": event.title,
+            "description": event.description,
+            "date_time": event.date_time.isoformat(),
+            "duration_minutes": event.duration_minutes,
+            "status": event.status,
+            "group_id": event.group_id,
+            "group_name": group_name,
+            "event_draft_id": event.event_draft_id,
+            "created_at": event.created_at.isoformat(),
+            "created_by": event.created_by,
+            "event_type": event.event_type,
+            "color": event.color,
+            "friend_name": friend_name
+        }
+
 
 
 # Для Администраторов запрос всех событий

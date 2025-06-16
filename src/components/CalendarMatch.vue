@@ -1,9 +1,9 @@
 <template>
   <div class="calendar-container">
     <div class="calendar-header">
-      <button @click="prevMonth">←</button>
+      <button class="scroll-btn" @click="prevMonth">←</button>
       <h2>{{ monthYearLabel }}</h2>
-      <button @click="nextMonth">→</button>
+      <button class="scroll-btn" @click="nextMonth">→</button>
     </div>
     <div class="calendar-grid">
       <div class="day-name" v-for="(day, index) in dayNames" :key="'name-' + index">{{ day }}</div>
@@ -184,4 +184,9 @@ function nextMonth() {
   background-color: #aaa;
   margin-left: 0.5rem;
 }
+
+.scroll-btn {
+  background-color: black;
+}
+
 </style>
