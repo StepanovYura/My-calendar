@@ -23,7 +23,10 @@
       <label>Никнейм друга (необязательно):</label>
       <input v-model="form.friend_username" type="text" placeholder="username" />
 
-      <button type="submit">Создать</button>
+      <div class="buttons">
+        <button type="submit">Создать</button>
+        <button type="button" @click="router.back()">Назад</button>
+      </div>
     </form>
   </div>
 </template>
@@ -95,5 +98,11 @@ button {
   border: none;
   border-radius: 4px;
   cursor: pointer;
+}
+
+.buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
 }
 </style>

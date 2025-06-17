@@ -1,9 +1,9 @@
 <template>
   <div class="calendar-container">
     <div class="calendar-header">
-      <button @click="prevMonth">←</button>
+      <button class="scroll-btn" @click="prevMonth">←</button>
       <h2>{{ monthYearLabel }}</h2>
-      <button @click="nextMonth">→</button>
+      <button class="scroll-btn" @click="nextMonth">→</button>
     </div>
     <div class="calendar-grid">
       <div class="day-name" v-for="(day, index) in dayNames" :key="'name-' + index">{{ day }}</div>
@@ -113,6 +113,7 @@ const daysWithEvents = computed(() => {
 })
 
 const calendarDays = computed(() => {
+  console.log("AAAAAA: ", currentYear.value, currentMonth.value)
   return getCalendarDays(currentYear.value, currentMonth.value)
 })
 
@@ -260,6 +261,10 @@ function closeEventModal() {
 .clickable-event {
   cursor: pointer;
   padding: 4px;
+}
+
+.scroll-btn {
+  background-color: black;
 }
 
 </style>

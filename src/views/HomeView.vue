@@ -53,9 +53,9 @@
           <div
             v-for="event in eventsForSelectedDay()"
             :key="event.id"
-            class="event"
+            class="event-day"
             :class="{ friend: event._isFriend }"
-            :style="getEventStyle(event, event._isFriend)"
+            :style="getDayEventStyle(event, event._isFriend)"
             @click="openEventModal(event)">
             {{ event.title }}
           </div>
@@ -77,15 +77,15 @@
                   :key="slot"
                   class="time-slot">
                   <div class="slot-time">{{ slot }}</div>
-                  <div class="slot-content">
-                  </div>
+                  <!-- <div class="slot-content">
+                  </div> -->
                 </div>
                 <div
                   v-for="event in weekEventsForDay(day)"
                   :key="event.id"
-                  class="event"
+                  class="event-week"
                   :class="{ friend: event._isFriend }"
-                  :style="getEventStyle(event, event._isFriend)"
+                  :style="getWeekEventStyle(event, event._isFriend)"
                   >
                   <!-- {{ event.title }} -->
                 </div>
@@ -293,6 +293,68 @@ function getEventStyle(event, isFriend = false) {
     position: 'absolute'
   }
 }
+
+function getDayEventStyle(event, isFriend = false) {
+  const START_HOUR = 8;
+  const SLOT_HEIGHT = 61;
+
+  const start = new Date(event.date_time);
+  const startHour = start.getHours();
+  const startMinutes = start.getMinutes();
+
+  const topOffset = ((startHour - START_HOUR) + startMinutes / 60) * SLOT_HEIGHT;
+  const height = Math.max(20, (event.duration_minutes / 60) * SLOT_HEIGHT);
+
+  // ширина рассчитываемая
+  let width = 'calc(100% - 70px)';
+  if (eventsStore.selectedFriend) {
+    width = 'calc((100% - 70px) / 2)';
+  }
+
+  const style = {
+    top: `${topOffset}px`,
+    height: `${height}px`,
+    width: width
+  };
+
+  if (isFriend) {
+    style.left = 'calc(70px + (100% - 70px) / 2)';
+  }
+  
+  console.log(`Event "${event.title}": ${startHour}:${startMinutes} => top: ${topOffset}px, height: ${height}px`);
+  return style;
+}
+
+function getWeekEventStyle(event, isFriend = false) {
+  const START_HOUR = 8;
+  const SLOT_HEIGHT = 40.2;
+
+  const start = new Date(event.date_time);
+  const startHour = start.getHours();
+  const startMinutes = start.getMinutes();
+
+  const topOffset = ((startHour - START_HOUR) + startMinutes / 60) * SLOT_HEIGHT;
+  const height = Math.max(20, (event.duration_minutes / 60) * SLOT_HEIGHT);
+
+  let width = 'calc(100% - 70px)';
+  if (eventsStore.selectedFriend) {
+    width = 'calc((100% - 70px) / 2)';
+  }
+
+  const style = {
+    top: `${topOffset}px`,
+    height: `${height}px`,
+    width: width
+  };
+
+  if (isFriend) {
+    style.left = 'calc(70px + (100% - 70px) / 2)';
+  }
+
+  return style;
+}
+
+
 
 // Загрузка при монтировании
 onMounted(async () => {
@@ -537,6 +599,17 @@ body {
   border-bottom: 1px solid #ccc;
 }
 
+.event-day {
+  position: absolute;
+  left: 70px;
+  background-color: #dcedc8;
+  border: 1px solid #a5d6a7;
+  border-radius: 4px;
+  padding: 2px 4px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
 .event {
   /* position: absolute;
   left: 0;
@@ -621,6 +694,17 @@ footer {
   gap: 1rem;
 }
 
+.event-week {
+  position: absolute;
+  left: 60px;
+  background-color: #bbdefb;
+  border: 1px solid #90caf9;
+  border-radius: 4px;
+  padding: 2px 4px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
 .day-column {
   flex: 1;
   display: flex;
@@ -628,6 +712,7 @@ footer {
   border: 1px solid #ccc;
   min-width: 100px;
   max-width: 160px;
+  position: relative;
 }
 
 .day-header {
@@ -706,6 +791,11 @@ footer {
     font-size: 0.8rem;
     padding: 1px 2px;
   }
+}
+
+.event-day.friend {
+  background-color: aqua; /* синий для друга */
+  border-color: rgb(41, 173, 173);
 }
 
 </style>

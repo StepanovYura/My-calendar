@@ -84,7 +84,8 @@ class EventDraft(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     event_type = db.Column(db.String(100))
     color = db.Column(db.String(7))
-
+    date = db.Column(db.Date, nullable=False)
+    
     slots = db.relationship('AvailabilitySlot', backref='event_draft', cascade='all, delete-orphan')
     consents = db.relationship('EventConsent', backref='event_draft', cascade='all, delete-orphan')
     events = db.relationship('Event', backref='event_draft', cascade='all, delete-orphan')

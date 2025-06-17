@@ -1,6 +1,6 @@
 import { handleResponse } from './utils';
 
-const API_BASE = 'http://127.0.0.1:5000/api/event_drafts';
+const API_BASE = 'http://127.0.0.1:5000/api/events_drafts';
 
 /**
  * Создание черновика события

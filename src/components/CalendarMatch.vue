@@ -12,8 +12,7 @@
         v-for="(day, index) in calendarDays"
         :key="'cell-' + index"
         :style="getDayStyle(day.date)"
-        @click="day.date && emit('open-modal', day.date)"
-      >
+        @click="day.date && emit('open-modal', day.date)">
         {{ day.day }}
       </div>
     </div>
@@ -45,6 +44,9 @@ function getCalendarDays(year, month) {
   const end = new Date(year, month + 1, 0)
   const daysInMonth = end.getDate()
   const startWeekDay = (start.getDay() + 6) % 7
+  // const startWeekDay = start.getDay() === 0 ? 6 : start.getDay() - 1
+
+  console.log('Месяц начинается с:', start.toDateString(), 'getDay:', start.getDay(), 'startWeekDay:', startWeekDay);
 
   const days = []
   for (let i = 0; i < startWeekDay; i++) {
@@ -61,13 +63,18 @@ function getCalendarDays(year, month) {
 }
 
 const calendarDays = computed(() => {
+  console.log("AAAAAA: ", props.currentYear, props.currentMonth)
   return getCalendarDays(props.currentYear, props.currentMonth)
 })
 
 function getDayStyle(date) {
+  console.log("BBBBB: ", date)
   if (!date) return {}
-  const dateStr = date.toISOString().split('T')[0]
-  const color = props.matchDays[dateStr]
+  const dateStr = date.toLocaleDateString('sv-SE')
+  const dayData = props.matchDays[dateStr]
+  if (!dayData) return {}
+
+  const color = dayData.color
   if (color === 'green') return { backgroundColor: 'lightgreen' }
   if (color === 'yellow') return { backgroundColor: 'khaki' }
   if (color === 'red') return { backgroundColor: 'lightcoral' }

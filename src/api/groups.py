@@ -240,7 +240,7 @@ class GroupDetail(Resource):
                 "status": d.status,
                 "created_at": d.created_at.isoformat(),
                 "created_by": d.created_by,
-                "date_time": d.created_at.isoformat(),  # если нет отдельного поля даты события
+                "date": d.date.isoformat(),
                 "consents": [
                     {
                         "user_id": c.user_id,

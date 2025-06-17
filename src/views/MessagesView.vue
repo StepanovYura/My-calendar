@@ -43,9 +43,9 @@
         <h3>Ответить на приглашение</h3>
         <p>{{ selectedNote?.message }}</p>
         <div class="modal-buttons">
-          <button @click="respondToInvitation('accept')">Согласиться</button>
-          <button @click="respondToInvitation('decline')">Отказаться</button>
-          <button @click="closeRespondModal">Назад</button>
+          <button class="all-btn" @click="respondToInvitation('accept')">Согласиться</button>
+          <button class="all-btn" @click="respondToInvitation('decline')">Отказаться</button>
+          <button class="all-btn" @click="closeRespondModal">Назад</button>
         </div>
       </div>
     </div>
@@ -449,7 +449,6 @@ footer {
   display: flex;
   gap: 1rem;
   margin-top: 1rem;
-  background-color: black;
 }
 
 .filter-btn {
@@ -462,5 +461,9 @@ footer {
   text-align: center;
   font-weight: bold;
   padding: 1rem;
+}
+
+.all-btn {
+  background-color: black;
 }
 </style>

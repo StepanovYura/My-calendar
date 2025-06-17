@@ -115,7 +115,7 @@
             {{ member.user_name }} (ID: {{ member.user_id }}) — вступил: {{ new Date(member.joined_at).toLocaleDateString() }}
           </li>
         </ul>
-        <button @click="showGroupInfoModal = false">Закрыть</button>
+        <button class="all-btn" @click="showGroupInfoModal = false">Закрыть</button>
       </div>
     </div>
 
@@ -125,8 +125,8 @@
         <h3>Пригласить в группу "{{ selectedGroup?.name }}"</h3>
         <input type="text" placeholder="Имя пользователя или email" v-model="inviteUsername" />
         <div class="modal-buttons">
-          <button @click="sendInvite">Отправить</button>
-          <button @click="showInviteModal = false">Назад</button>
+          <button class="all-btn" @click="sendInvite">Отправить</button>
+          <button class="all-btn" @click="showInviteModal = false">Назад</button>
         </div>
       </div>
     </div>
@@ -141,7 +141,7 @@
           </li>
         </ul>
         <p v-else>Нет активных голосований</p>
-        <button @click="showVotingModal = false">Закрыть</button>
+        <button class="all-btn" @click="showVotingModal = false">Закрыть</button>
       </div>
     </div>
 
@@ -149,10 +149,10 @@
     <div v-if="showVoteModal" class="modal">
       <div class="modal-content">
         <h3>Хотите ли вы участвовать в "{{ selectedDraft?.title }}"?</h3>
-        <p>Дата: {{ new Date(selectedDraft?.created_at).toLocaleDateString() }}</p>
-        <button @click="voteYes">Да</button>
-        <button @click="voteNo">Нет</button>
-        <button @click="showVoteModal = false">Назад</button>
+        <p>Дата: {{ new Date(selectedDraft?.date).toLocaleDateString() }}</p>
+        <button class="all-btn" @click="voteYes">Да</button>
+        <button class="all-btn" @click="voteNo">Нет</button>
+        <button class="all-btn" @click="showVoteModal = false">Назад</button>
       </div>
     </div>
 
@@ -163,11 +163,11 @@
         <div v-for="(slot, index) in voteSlots" :key="index" class="slot-row">
           <input type="time" v-model="slot.start" required />
           <input type="time" v-model="slot.end" required />
-          <button @click.prevent="removeSlot(index)">Удалить</button>
+          <button class="all-btn" @click.prevent="removeSlot(index)">Удалить</button>
         </div>
-        <button @click.prevent="addSlot">Добавить слот</button>
-        <button @click="submitVoteWithSlots">Отправить</button>
-        <button @click="showSlotsModal = false">Отмена</button>
+        <button class="all-btn" @click.prevent="addSlot">Добавить слот</button>
+        <button class="all-btn" @click="submitVoteWithSlots">Отправить</button>
+        <button class="all-btn" @click="showSlotsModal = false">Отмена</button>
       </div>
     </div>
 
@@ -183,7 +183,7 @@
           </li>
         </ul>
         <p v-else>Нет событий</p>
-        <button @click="showGroupScheduleModal = false">Закрыть</button>
+        <button class="all-btn" @click="showGroupScheduleModal = false">Закрыть</button>
       </div>
     </div>
 
@@ -309,8 +309,8 @@ const removeSlot = (index) => {
 const submitVoteWithSlots = async () => {
   try {
     const slotsData = voteSlots.value.map(slot => ({
-      start: `${selectedDraft.value.date_time.split('T')[0]}T${slot.start}`,
-      end: `${selectedDraft.value.date_time.split('T')[0]}T${slot.end}`
+      start: `${selectedDraft.value.date.split('T')[0]}T${slot.start}`,
+      end: `${selectedDraft.value.date.split('T')[0]}T${slot.end}`
     }))
     await eventsStore.voteForDraft(selectedDraft.value.id, {
       consent: true,
@@ -370,7 +370,7 @@ const openSchedule = async (group) => {
 
 const openDraftVote = (draft) => {
   selectedDraft.value = draft
-
+  console.log('CHECK', draft, selectedDraft.value)
   const userId = currentUser.value?.id
   const consent = draft.consents?.find(c => c.user_id === userId)
 
@@ -920,5 +920,9 @@ footer {
 .modal-my {
   width: 100%;
   background-color: #2a7ae2
+}
+
+.all-btn {
+  background-color: black;
 }
 </style>

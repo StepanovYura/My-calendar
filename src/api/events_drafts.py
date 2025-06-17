@@ -12,9 +12,9 @@ class EventDraftCreate(Resource):
         data = request.get_json()
         
         # Проверка обязательных полей
-        required_fields = ['title', 'group_id', 'date_time']
+        required_fields = ['title', 'group_id', 'date']
         if not all(field in data for field in required_fields):
-            return {"error": "Необходимы title, group_id и date_time"}, 400
+            return {"error": "Необходимы title, group_id и date"}, 400
         
         # Проверка членства в группе
         membership = GroupMember.query.filter_by(
@@ -30,7 +30,7 @@ class EventDraftCreate(Resource):
             description=data.get('description', ''),
             group_id=data['group_id'],
             created_by=int(get_jwt_identity()),
-            date_time=datetime.fromisoformat(data['date_time']),
+            date=data['date'],
             status='voting'
         )
         db.session.add(new_draft)
@@ -72,7 +72,7 @@ class EventDraftCreate(Resource):
 
 class VoteForDraft(Resource):
     @jwt_required()
-    def post(self, draft_id):
+    def post(self, event_draft_id):
         data = request.get_json()
         
         # Проверка голоса
@@ -80,12 +80,12 @@ class VoteForDraft(Resource):
             return {"error": "Необходимо указать consent (true/false)"}, 400
         
         # Получаем черновик
-        draft = db.session.get(EventDraft, draft_id)
+        draft = db.session.get(EventDraft, event_draft_id)
         if not draft:
             return {"error": "Черновик не найден"}, 404
         
         consent = EventConsent.query.filter_by(
-            event_draft_id=draft_id,
+            event_draft_id=event_draft_id,
             user_id=int(get_jwt_identity())
         ).first()
         
@@ -98,7 +98,7 @@ class VoteForDraft(Resource):
                 return {"error": "Вы не участник группы"}, 403
                 
             consent = EventConsent(
-                event_draft_id=draft_id,
+                event_draft_id=event_draft_id,
                 user_id=int(get_jwt_identity()),
                 consent=data['consent']
             )
@@ -116,63 +116,76 @@ class VoteForDraft(Resource):
             # пока что пользователь может проголосовать единожды в черновике!!!
             # Удаляем старые слоты
             AvailabilitySlot.query.filter_by(
-                event_draft_id=draft_id,
+                event_draft_id=event_draft_id,
                 user_id=int(get_jwt_identity())
             ).delete()
             
             # Добавляем новые
             for slot in data['slots']:
                 db.session.add(AvailabilitySlot(
-                    event_draft_id=draft_id,
+                    event_draft_id=event_draft_id,
                     user_id=int(get_jwt_identity()),
                     start_time=datetime.fromisoformat(slot['start']),
                     end_time=datetime.fromisoformat(slot['end'])
                 ))
             db.session.commit()
+
+        # После сохранения голоса проверим — все ли проголосовали
+        total_members = GroupMember.query.filter_by(group_id=draft.group_id).count()
+        votes = EventConsent.query.filter_by(event_draft_id=event_draft_id).count()
+
+        if votes >= total_members:
+            # все участники проголосовали, запускаем финализацию
+            finalize = FinalizeDraft()
+            return finalize.post(event_draft_id)
         
         return {"message": "Ваш голос учтен"}
 
 class FinalizeDraft(Resource):
     @jwt_required()
-    def post(self, draft_id):
-        draft = db.session.get(EventDraft, draft_id)
+    def post(self, event_draft_id):
+        draft = db.session.get(EventDraft, event_draft_id)
         if not draft:
             return {"error": "Черновик не найден"}, 404
         
         # Проверка что все участники проголосовали
         total_members = GroupMember.query.filter_by(group_id=draft.group_id).count()
-        votes = EventConsent.query.filter_by(event_draft_id=draft_id).count()
+        votes = EventConsent.query.filter_by(event_draft_id=event_draft_id).count()
         
         if votes < total_members:
             return {"error": "Не все участники проголосовали"}, 400
         
         # Подсчет голосов
         agreed_votes = EventConsent.query.filter_by(
-            event_draft_id=draft_id,
+            event_draft_id=event_draft_id,
             consent=True
         ).all()      
         
         # Поиск общего временного слота
-        common_slot = self.find_common_slot(draft_id, agreed_votes)
+        common_slot = self.find_common_slot(event_draft_id, agreed_votes)
         
         if not common_slot:
             draft.status = 'failed'
             db.session.commit()
-            notify_event_draft_failed(draft_id, "Не найдено подходящего времени для всех участников")
+            notify_event_draft_failed(event_draft_id, "Не найдено подходящего времени для всех участников")
             return {"message": "Не найдено общего временного слота", "status": "failed"}
         
+        date_time = datetime.combine(
+            draft.date,
+            common_slot['start'].time()
+        )   
         # Создание события
         event = Event(
             title=draft.title,
             description=draft.description,
             group_id=draft.group_id,
             event_draft_id=draft.id,
-            date_time=common_slot['start'],
+            date_time=date_time,
             duration_minutes=int((common_slot['end'] - common_slot['start']).total_seconds() / 60),
             created_by=draft.created_by
         )
         db.session.add(event)
-        
+        db.session.flush()
         # Добавление участников
         for vote in agreed_votes:
             db.session.add(EventParticipant(
@@ -184,7 +197,7 @@ class FinalizeDraft(Resource):
         db.session.commit()
         
         # Оповещение участников
-        notify_event_draft_success(draft_id)
+        notify_event_draft_success(event_draft_id)
         
         return {
             "message": "Событие создано",
@@ -193,13 +206,13 @@ class FinalizeDraft(Resource):
             "end_time": common_slot['end'].isoformat()
         }
 
-    def find_common_slot(self, draft_id, agreed_votes):
+    def find_common_slot(self, event_draft_id, agreed_votes):
         """Поиск общего временного интервала среди всех участников"""
         # Получаем слоты всех согласившихся участников
         all_slots = []
         for vote in agreed_votes:
             user_slots = AvailabilitySlot.query.filter_by(
-                event_draft_id=draft_id,
+                event_draft_id=event_draft_id,
                 user_id=vote.user_id
             ).order_by(AvailabilitySlot.start_time).all()
                 
@@ -231,7 +244,7 @@ class FinalizeDraft(Resource):
                 common_slots.append({
                     'start': current_start,
                     'end': current_end,
-                    'duration': (current_end - current_start).total_seconds()
+                    'duration': (current_end - current_start).total_seconds() # почему секунды? может минуты?
                 })
         
         if not common_slots:

@@ -7,7 +7,7 @@ from extensions import mail, db
 from flask_mail import Message
 
 # Общая функция для создания уведомления
-def create_notification(receiver_id, message, type, sender_id='system', 
+def create_notification(receiver_id, message, type, sender_id=None, 
                        event_id=None, group_id=None, event_draft_id=None):
     print(f"Попытка создать уведомление для {receiver_id}")
     notification = Notification(

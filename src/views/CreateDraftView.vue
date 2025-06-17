@@ -63,7 +63,7 @@ const submitDraft = async () => {
       title: form.value.title,
       description: form.value.description,
       group_id: groupId,
-      date_time: `${form.value.date}T00:00:00`,
+      date: `${form.value.date}`,
       slots: slots.value.map(slot => ({
         start: `${form.value.date}T${slot.start}`,
         end: `${form.value.date}T${slot.end}`

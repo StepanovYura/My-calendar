@@ -8,7 +8,7 @@
           <button type="button" class="match-btn" @click="toggleGroupDropdown">
             Группы
           </button>
-          <div class="dropdown-content" v-if="showGroupDropdown">
+          <div class="dropdown-content" v-if="showGroupDropdown && groupsStore.groups.length">
             <div v-for="group in groupsStore.groups" :key="group.id" @click="selectGroup(group)">
               {{ group.name }}
             </div>
@@ -20,9 +20,9 @@
           <button type="button" class="match-btn" @click="toggleFriendDropdown">
             Друзья
           </button>
-          <div class="dropdown-content" v-if="showFriendDropdown">
+          <div class="dropdown-content" v-if="showFriendDropdown && friendsStore.friends.length">
             <div v-for="friend in friendsStore.friends" :key="friend.id" @click="selectFriend(friend)">
-              {{ friend.username }}
+              {{ friend.name }}
             </div>
           </div>
         </div>
@@ -69,6 +69,7 @@ import CalendarMatch from '../components/CalendarMatch.vue'
 
 const groupsStore = useGroupsStore()
 const friendsStore = useFriendsStore()
+// friendsStore.fetchFriends()
 const authStore = useAuthStore()
 
 const showGroupDropdown = ref(false)
@@ -82,27 +83,33 @@ const currentMonth = ref(new Date().getMonth())
 
 const showModal = ref(false)
 const selectedDate = ref(null)
+const isLoading = ref(false)
+const error = ref(null)
 
 const selectedDateFormatted = computed(() =>
   selectedDate.value
-    ? selectedDate.value.toISOString().split('T')[0]
+    // ? selectedDate.value.toISOString().split('T')[0]
+    ? selectedDate.value.toLocaleDateString('sv-SE')
     : ''
 )
 
+console.log("DDDDD: ", selectedDateFormatted, selectedDate.value)
 const currentDayMatches = computed(() => {
   return matchDays.value[selectedDateFormatted.value] || null
 })
 
 function openModal(date) {
+  console.log("CCCCCC: ", date)
   selectedDate.value = date
   showModal.value = true
+  console.log("DDDDD: ", selectedDateFormatted)
 }
 
 function closeModal() {
   showModal.value = false
 }
 
-onMounted(() => {
+onMounted(async () => {
   groupsStore.fetchGroups()
   friendsStore.fetchFriends()
 })
@@ -117,10 +124,13 @@ function toggleFriendDropdown() {
   showGroupDropdown.value = false
 }
 
-function selectGroup(group) {
+async function selectGroup(group) {
   selectedGroup.value = group
   selectedFriend.value = null
   showGroupDropdown.value = false
+  await groupsStore.fetchGroupDetail(group.id)
+  console.log('Выбрана группа', group)
+  console.log('Участники группы:', groupsStore.groupDetails?.members)
   loadMatches()
 }
 
@@ -136,11 +146,11 @@ async function loadMatches() {
   const token = authStore.token
 
   const participants = selectedGroup.value
-    ? selectedGroup.value.members?.map(m => m.id) || []
+    ? groupsStore.groupDetails?.members?.map(m => m.user_id) || []
     : selectedFriend.value
     ? [selectedFriend.value.id]
     : []
-
+  console.log("Участники группы:", participants)
   if (participants.length === 0) {
     console.warn('Нет выбранных участников для загрузки совпадений')
     return
