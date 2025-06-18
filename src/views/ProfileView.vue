@@ -4,7 +4,7 @@
     <div class="views">
       <div class="choice-friend">
         <div class="avatarka">
-          <img :src="userProfile.avatar_url || defaultAvatar" alt="avatar" id="avatar" width="100" height="100" />
+          <img :src="fullAvatarUrl" alt="avatar" id="avatar" width="100" height="100" />
         </div>
         <div class="nick">{{ userProfile.name }}</div>
         <button type="button" class="settings-btn" @click="openSettings">
@@ -64,6 +64,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../stores/authStore'
 import { fetchUserProfile, updateUserProfile } from '../api-frontend/user'
+import { API_BASE_URL } from '../config';
 
 const authStore = useAuthStore()
 const userProfile = ref({})
@@ -127,6 +128,12 @@ const jokes = [
   "Только программист понимает, что значит «работает на моей машине».",
   "Мечта программиста — писать код, который не нужно поддерживать. Реальность — багфиксы по ночам."
 ]
+
+const fullAvatarUrl = computed(() => {
+  return userProfile.value.avatar_url
+    ? `${API_BASE_URL}${userProfile.value.avatar_url}`
+    : defaultAvatar
+})
 
 const currentJoke = computed(() => {
   const day = new Date().getDate()
@@ -440,6 +447,96 @@ footer {
 .password-change-btn {
   background-color: #2196F3;
   color: white;
+}
+
+@media (max-width: 768px) {
+  .views {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .choice-friend {
+    padding: 1rem 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .avatarka img {
+    width: 80px;
+    height: 80px;
+  }
+
+  .nick {
+    font-size: 1rem;
+    text-align: center;
+  }
+
+  .settings-btn {
+    width: 100%;
+    font-size: 0.9rem;
+  }
+
+  .calendary {
+    padding: 0.5rem;
+  }
+
+  .joke-text {
+    font-size: 0.9rem;
+  }
+
+  .modal-content {
+    width: 90%;
+    padding: 1rem;
+  }
+
+  .modal-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .modal-buttons button,
+  .password-change-btn {
+    width: 100%;
+  }
+
+  footer {
+    padding: 10px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .avatarka img {
+    width: 60px;
+    height: 60px;
+  }
+
+  .settings-btn {
+    font-size: 0.85rem;
+    padding: 0.4rem;
+  }
+
+  .joke-text {
+    font-size: 0.85rem;
+  }
+
+  .modal-content {
+    width: 95%;
+  }
+
+  .form-group label {
+    font-size: 0.85rem;
+  }
+
+  .form-group input,
+  .form-group select {
+    font-size: 0.85rem;
+  }
+
+  .save-btn,
+  .cancel-btn,
+  .password-change-btn {
+    font-size: 0.85rem;
+  }
 }
 
 

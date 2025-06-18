@@ -2,12 +2,12 @@
   <header>
     <nav class="navbar">
       <div class="logo">
-        <a href="/">
+        <a href="/" v-if="!isAdmin">
           <img src="" alt="logo" />
         </a>
       </div>
       <div class="nowData"><p>{{ currentDate }}</p></div>
-      <div class="search">
+      <div class="search" v-if="!isAdmin">
         <form @submit.prevent="searchByDate">
           <input 
             v-model="searchDate"
@@ -26,7 +26,7 @@
           >
         </form>
       </div>
-      <div class="nav-buttons">
+      <div class="nav-buttons" v-if="!isAdmin">
         <RouterLink to="/" class="icons":class="{active: $route.path === '/'}" id="schedule">
           <img src="../assets/shedule-light-48.png" alt="sched">
         </RouterLink>
@@ -60,7 +60,7 @@ const router = useRouter()
 const searchDate = ref('')
 const authStore = useAuthStore()
 const isAuthenticated = computed(() => !!authStore.token)
-
+const isAdmin = computed(() => authStore.user?.role === 'admin')
 onMounted(() => {
   const date = new Date()
   currentDate.value = date.toLocaleDateString('ru-RU')

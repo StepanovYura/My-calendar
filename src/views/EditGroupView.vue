@@ -120,4 +120,39 @@ button {
   gap: 1rem;
 }
 
+@media (max-width: 768px) {
+  .create-event-page {
+    width: 90%;
+    padding: 16px;
+    margin: 20px auto;
+  }
+
+  input,
+  textarea {
+    font-size: 0.95rem;
+    padding: 0.5rem;
+  }
+
+  .buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  h2 {
+    font-size: 1.2rem;
+    text-align: center;
+  }
+
+  label {
+    font-size: 0.95rem;
+  }
+}
+
+
 </style>

@@ -147,4 +147,40 @@ async function handleRegister() {
   width: 100%;
   margin-bottom: 20px;
 }
+
+@media (max-width: 768px) {
+  .main-field {
+    width: 80%;
+  }
+
+  #main {
+    gap: 0.8rem;
+  }
+
+  #auth-btn {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-field {
+    width: 95%;
+  }
+
+  h2 {
+    font-size: 1.4rem;
+  }
+
+  .email-input,
+  .password-input {
+    padding: 8px 10px;
+    font-size: 0.95rem;
+  }
+
+  .toggle-icon {
+    right: 8px;
+  }
+}
+
+
 </style>

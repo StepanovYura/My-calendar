@@ -74,6 +74,9 @@
                   @click="leaveGroup(group)"
                   class="leave-btn"
                 >Выйти</button>
+                <div class="avatarka">
+                  <img :src="getGroupAvatarUrl(group)" alt="avatar" id="avatar" width="50" height="50" />
+                </div>
               </div>
             </div>
           </div>
@@ -231,6 +234,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useGroupsStore } from '../stores/groupsStore'
 import { getGroupDetail } from '../api-frontend/groups'
 import { searchUsers } from '../api-frontend/user'
+import { API_BASE_URL } from '../config';
 
 const groupsStore = useGroupsStore()
 const eventsStore = useEventsStore()
@@ -252,6 +256,12 @@ const groupSchedule = ref([])
 const showAddModal = ref(false)
 const showAddFriendModal = ref(false)
 const friendSearchQuery = ref('')
+
+const getGroupAvatarUrl = (group) => {
+  return group.avatar_url
+    ? `${API_BASE_URL}${group.avatar_url}`
+    : '';
+}
 
 const openAddModal = () => {
   showAddModal.value = true
@@ -838,6 +848,7 @@ footer {
 .group-actions button {
   background-color: #dcdcdc;
   border: none;
+  height: 30px;
   padding: 6px 10px;
   border-radius: 5px;
   cursor: pointer;
@@ -925,4 +936,132 @@ footer {
 .all-btn {
   background-color: black;
 }
+
+.avatarka img {
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0.5rem;
+  }
+
+  .views {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .holder-choice {
+    flex-direction: column;
+    max-height: none;
+    padding: 0.5rem;
+  }
+
+  .choice-friend {
+    padding: 1rem 0.5rem;
+  }
+
+  .comm-btn {
+    min-width: auto;
+    width: 100%;
+  }
+
+  .calendary {
+    height: auto;
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  .event-card,
+  .friend-card,
+  .group-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .event-actions,
+  .group-actions {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .event-info {
+    font-size: 0.9rem;
+  }
+
+  .event-title {
+    font-size: 1rem;
+  }
+
+  #add-event-button {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    top: auto;
+    z-index: 1000;
+  }
+
+  .modal-content {
+    padding: 1rem;
+    width: 90%;
+  }
+
+  footer .footer-content {
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .comm-btn {
+    font-size: 0.8rem;
+    padding: 0.4rem;
+  }
+
+  .event-title {
+    font-size: 0.9rem;
+  }
+
+  .event-inline {
+    font-size: 0.75rem;
+  }
+
+  .friend-info {
+    font-size: 0.9rem;
+  }
+
+  .modal-content {
+    width: 95%;
+  }
+
+  .modal-buttons {
+    gap: 0.5rem;
+  }
+
+  .close-btn,
+  .modal-my {
+    width: 100%;
+    font-size: 0.85rem;
+  }
+
+  .group-info {
+    font-size: 0.95rem;
+  }
+
+  .group-actions button {
+    font-size: 0.75rem;
+    height: auto;
+    padding: 4px 6px;
+  }
+
+  .avatarka img {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+
 </style>

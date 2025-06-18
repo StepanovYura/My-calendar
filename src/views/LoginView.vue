@@ -23,7 +23,7 @@
           required
         >
         <span class="toggle-icon" @click="showPassword = !showPassword">
-          <i :class="showPassword ? 'eye-slash' : 'eye'"></i> <!-- НЕ РАБОТАЕТ СКРЫТИЕ\ПОКАЗ ПАРОЛЯ-->
+          <i :class="showPassword ? 'eye-slash' : 'eye'"></i>
         </span>
       </div>
 
@@ -53,7 +53,11 @@ const form = ref({
 async function handleLogin() {
   const success = await authStore.login(form.value)
   if (success) {
-    router.push('/')
+    if (authStore.user?.role === 'admin') {
+      router.push('/admin')
+    } else {
+      router.push('/')
+    }
   } else {
     alert(authStore.error || 'Ошибка авторизации')
   }

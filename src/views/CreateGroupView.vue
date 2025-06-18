@@ -42,8 +42,8 @@ const submitGroup = async () => {
     const formData = new FormData()
     formData.append('name', form.value.name)
     formData.append('description', form.value.description)
-    if (file.value) {
-      formData.append('avatar', file.value)
+    if (file.value.avatar) {
+      formData.append('avatar', file.value.avatar)
     }
 
     await groupsStore.createGroup(formData)
@@ -106,5 +106,49 @@ button {
   justify-content: space-between;
   gap: 1rem;
 }
+
+@media (max-width: 768px) {
+  .create-event-page {
+    width: 90%;
+    padding: 16px;
+    margin: 20px auto;
+  }
+
+  input,
+  textarea {
+    font-size: 0.95rem;
+    padding: 0.5rem;
+  }
+
+  button {
+    font-size: 0.9rem;
+    padding: 0.6rem;
+  }
+
+  .buttons {
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  h2 {
+    font-size: 1.2rem;
+    text-align: center;
+  }
+
+  label {
+    font-size: 0.95rem;
+  }
+
+  button {
+    width: 100%;
+  }
+
+  .create-event-page {
+    padding: 12px;
+  }
+}
+
 
 </style>

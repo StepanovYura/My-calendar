@@ -65,7 +65,15 @@ class UserLogin(Resource):
         return {
             "token": token,
             "user_id": user.id,
-            "is_admin": user.role == 'admin'
+            "is_admin": user.role == 'admin',
+            "user": {
+                "id": user.id,
+                "name": user.name,
+                "email": user.email,
+                "role": user.role,
+                "privacy_setting": user.privacy_setting,
+                "avatar_url": user.avatar_url
+            }
         }
 
 class UserLogout(Resource):
@@ -77,15 +85,36 @@ class UserLogout(Resource):
 
         return {"message": "Успешный выход из системы"}
     
+# class CheckAuth(Resource):
+#     @jwt_required()
+#     def get(self):
+#         user_id = int(get_jwt_identity())
+#         user = db.session.get(User, user_id)
+        
+#         return {
+#             "authenticated": True,
+#             "user_id": user.id,
+#             "is_admin": user.role == 'admin',
+#             # 'user': user
+#         }
+
 class CheckAuth(Resource):
     @jwt_required()
     def get(self):
         user_id = int(get_jwt_identity())
         user = db.session.get(User, user_id)
         
+        if not user:
+            return {"authenticated": False}, 401
+        print(user)
         return {
             "authenticated": True,
-            "user_id": user.id,
-            "is_admin": user.role == 'admin',
-            # 'user': user
+            "user": {
+                "id": user.id,
+                "name": user.name,
+                "email": user.email,
+                "role": user.role,
+                "privacy_setting": user.privacy_setting,
+                "avatar_url": user.avatar_url
+            }
         }

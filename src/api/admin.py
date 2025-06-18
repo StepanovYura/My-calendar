@@ -49,7 +49,8 @@ class AdminUserActions(Resource):
         
         for field in allowed_fields:
             if field in data:  # Если поле есть в запросе
-                user.field = data[field]  
+                # user.field = data[field] 
+                setattr(user, field, data[field]) 
         
         
         db.session.commit()

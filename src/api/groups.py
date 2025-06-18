@@ -23,17 +23,21 @@ class GroupCreate(Resource):
             name=data['name'],
             description=data.get('description', ''),
             created_by=int(get_jwt_identity()),
-            avatar_url=data.get('avatar_url')
+            avatar_url=None
         )
         db.session.add(new_group)
         db.session.commit()
 
         if avatar:
+            # Сохраняем аватарку с уникальным именем
             filename = f"group_{new_group.id}_{avatar.filename}"
             filepath = os.path.join("static", "avatars", filename)
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
             avatar.save(filepath)
-            new_group.avatar_url = f"{host_url}/static/avatars/{filename}"
+
+            # Сохраняем относительный путь
+            new_group.avatar_url = f"/static/avatars/{filename}"
+            db.session.commit()
 
         # Автоматически добавляем создателя в участники
         membership = GroupMember(
@@ -45,7 +49,8 @@ class GroupCreate(Resource):
 
         return {
             "message": "Группа создана",
-            "group_id": new_group.id
+            "group_id": new_group.id,
+            "avatar_url": new_group.avatar_url
         }, 201
 
 # Вступление в группу (POST /groups/<int:group_id>/join)
@@ -118,7 +123,6 @@ class GroupEdit(Resource):
     @jwt_required()
     def put(self, group_id):
         group = db.session.get(Group, group_id)
-        host_url = request.host_url.rstrip('/') # ВОЗМОЖНО БУДЕТ ВСЁ ЛОМАТЬ И СТОИТ БЕЗ НЕГО
         if not group:
             return {"error": "Группа не найдена"}, 404
 
@@ -133,10 +137,19 @@ class GroupEdit(Resource):
         group.name = data.get('name', group.name)
         group.description = data.get('description', group.description)
         if avatar:
+            # Удаляем старый файл при редактировании
+            if group.avatar_url:
+                old_path = group.avatar_url.replace('/static/', 'static/')
+                try:
+                    os.remove(old_path)
+                except Exception as e:
+                    print(f"Не удалось удалить старый аватар: {e}")
+
             filename = f"group_{group.id}_{avatar.filename}"
             filepath = os.path.join("static", "avatars", filename)
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
             avatar.save(filepath)
-            group.avatar_url = f"{host_url}/static/avatars/{filename}"
+            group.avatar_url = f"/static/avatars/{filename}"
 
         db.session.commit()
 

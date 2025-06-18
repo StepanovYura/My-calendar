@@ -20,10 +20,9 @@ export function updateUserProfile(token, updatedData) {
   return fetch(`${API_BASE}/profile`, {
     method: 'PUT',
     headers: {
-      'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`
     },
-    body: JSON.stringify(updatedData)
+    body: updatedData
   }).then(handleResponse);
 }
 

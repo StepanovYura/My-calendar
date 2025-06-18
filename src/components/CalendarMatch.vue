@@ -44,9 +44,7 @@ function getCalendarDays(year, month) {
   const end = new Date(year, month + 1, 0)
   const daysInMonth = end.getDate()
   const startWeekDay = (start.getDay() + 6) % 7
-  // const startWeekDay = start.getDay() === 0 ? 6 : start.getDay() - 1
 
-  console.log('Месяц начинается с:', start.toDateString(), 'getDay:', start.getDay(), 'startWeekDay:', startWeekDay);
 
   const days = []
   for (let i = 0; i < startWeekDay; i++) {
@@ -63,12 +61,10 @@ function getCalendarDays(year, month) {
 }
 
 const calendarDays = computed(() => {
-  console.log("AAAAAA: ", props.currentYear, props.currentMonth)
   return getCalendarDays(props.currentYear, props.currentMonth)
 })
 
 function getDayStyle(date) {
-  console.log("BBBBB: ", date)
   if (!date) return {}
   const dateStr = date.toLocaleDateString('sv-SE')
   const dayData = props.matchDays[dateStr]
@@ -194,6 +190,43 @@ function nextMonth() {
 
 .scroll-btn {
   background-color: black;
+}
+
+@media (max-width: 768px) {
+  .calendar-container {
+    padding: 0.5rem;
+  }
+
+  .calendar-grid {
+    gap: 4px;
+  }
+
+  .day-name {
+    font-size: 0.8rem;
+  }
+
+  .day-cell {
+    padding: 6px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .calendar-header h2 {
+    font-size: 1rem;
+  }
+
+  .scroll-btn {
+    font-size: 0.8rem;
+    padding: 2px 6px;
+  }
+
+  .day-name {
+    font-size: 0.7rem;
+  }
+
+  .day-cell {
+    font-size: 0.7rem;
+  }
 }
 
 </style>

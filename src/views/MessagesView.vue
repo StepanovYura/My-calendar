@@ -3,7 +3,7 @@
   <main class="container">
     <div class="views">
       <div class="choice-friend">
-        <button class="filter-btn" @click="toggleRequestFilter">Запросы в друзья
+        <button class="filter-btn" @click="toggleRequestFilter">Запросы
             <span v-if="isRequestFilterActive">✓</span>
         </button>
         <button class="filter-btn" @click="toggleAlertFilter">Оповещения
@@ -191,7 +191,7 @@ async function respondToInvitation(action) {
     if (selectedNote.value.type === 'invitation') {
       if (selectedNote.value.group_id === null) {
         // Приглашение в друзья
-        await respondToFriendRequest(token, selectedNote.value.id, action)
+        await respondToFriendRequest(token, selectedNote.value.friend_request_id, action)
         alert(`Вы ${action === 'accept' ? 'приняли' : 'отклонили'} заявку в друзья`)
       } else {
         // Приглашение в группу
@@ -466,4 +466,76 @@ footer {
 .all-btn {
   background-color: black;
 }
+
+@media (max-width: 768px) {
+  .views {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .choice-friend {
+    padding: 1rem 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .filter-btn {
+    width: 100%;
+    font-size: 0.9rem;
+  }
+
+  .calendary {
+    padding: 0.5rem;
+  }
+
+  .notification-list li {
+    padding: 0.8rem;
+    font-size: 0.9rem;
+  }
+
+  .note-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .note-actions button {
+    width: 100%;
+  }
+
+  .modal-content {
+    width: 90%;
+    padding: 1rem;
+  }
+
+  footer {
+    padding: 10px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-btn {
+    font-size: 0.8rem;
+    padding: 0.4rem;
+  }
+
+  .notification-list li {
+    font-size: 0.85rem;
+  }
+
+  .modal-content {
+    width: 95%;
+  }
+
+  .modal-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .all-btn {
+    font-size: 0.85rem;
+  }
+}
+
+
 </style>

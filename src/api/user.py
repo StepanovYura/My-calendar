@@ -2,8 +2,13 @@ from flask import request
 from flask_restful import Resource
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from extensions import db
 from models.models import User
+import os
+from flask import current_app
+from api.utils.file_utils import allowed_file
+import uuid
 
 class UserProfile(Resource):
     @jwt_required()
@@ -24,8 +29,9 @@ class UserProfile(Resource):
     def put(self):
         user_id = int(get_jwt_identity())
         user = db.session.get(User, user_id)
-        data = request.get_json()
-        
+
+        data = request.form
+
         if 'email' in data and data['email'] != user.email:
             if User.query.filter_by(email=data['email']).first():
                 return {"error": "Email уже занят"}, 400
@@ -34,12 +40,33 @@ class UserProfile(Resource):
         if 'name' in data:
             user.name = data['name']
         
-        if 'avatar_url' in data:
-            user.avatar_url = data['avatar_url']
-        
         if 'privacy_setting' in data:
             user.privacy_setting = data['privacy_setting']
         
+        # Обработка аватара
+        if 'avatar' in request.files:
+            avatar = request.files['avatar']
+            if avatar and allowed_file(avatar.filename):
+                # Удаляем старый аватар (если не дефолтный)
+                if user.avatar_url and not user.avatar_url.startswith('/default-avatar'):
+                    old_path = os.path.join(current_app.static_folder, user.avatar_url.lstrip('/'))
+                    if os.path.exists(old_path):
+                        os.remove(old_path)
+
+                # Генерируем имя файла
+                ext = avatar.filename.rsplit('.', 1)[1].lower()
+                filename = f"{uuid.uuid4().hex}.{ext}"
+
+                # Сохраняем файл
+                save_path = os.path.join(current_app.static_folder, 'avatars', filename)
+                avatar.save(save_path)
+
+                # Обновляем путь в БД
+                user.avatar_url = f"/static/avatars/{filename}"
+
+            else:
+                return {"error": "Недопустимый формат файла"}, 400
+
         db.session.commit()
         
         return {"message": "Профиль обновлен"}

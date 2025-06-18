@@ -152,4 +152,43 @@ async function handlePasswordChange() {
   width: 100%;
   margin-bottom: 20px;
 }
+
+@media (max-width: 1024px) {
+  .main-field {
+    width: 60%;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-field {
+    width: 80%;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-field {
+    width: 95%;
+  }
+
+  .email-input,
+  .password-input {
+    padding: 8px 30px 8px 10px;
+    font-size: 0.9rem;
+  }
+
+  #auth-btn {
+    font-size: 0.9rem;
+    padding: 10px;
+  }
+
+  h2 {
+    font-size: 1.2rem;
+  }
+
+  .toggle-icon i {
+    font-size: 1rem;
+  }
+}
+
+
 </style>

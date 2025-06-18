@@ -2,7 +2,7 @@ from flask import Flask
 from flask_cors import CORS
 from api.routes import api_bp  # маршруты API (например, events.py)
 from extensions import mail, db, jwt
-
+import os
 # === Создание приложения ===
 app = Flask(__name__, static_folder='static')
 app.config['SECRET_KEY'] = 'my-secret-key'  # использует Flask-Login
@@ -13,7 +13,7 @@ app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'yurastep05@gmail.com'
 app.config['MAIL_PASSWORD'] = 'Namigra20' # или Namigra20 # НУЖЕН НЕ ОБЫЧНЫЙ ПАРОЛЬ А СГЕНЕРИРОВАННЫЙ ОТ GOOGLE В APP-PASSWORD
-
+app.config['UPLOAD_FOLDER'] = os.path.join('static', 'avatars')
 # === Подключение CORS (для фронта) ===
 CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}}) #CORS(app, supports_credentials=True)
 

@@ -798,4 +798,135 @@ footer {
   border-color: rgb(41, 173, 173);
 }
 
+/* ====== АДАПТИВНОСТЬ ДЛЯ ПЛАНШЕТОВ И МОБИЛОК ====== */
+@media (max-width: 768px) {
+  .container {
+    padding: 0.5rem;
+  }
+
+  .views {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .holder-choice {
+    flex-direction: column;
+    max-height: none;
+    padding: 0.5rem;
+  }
+
+  #choice {
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 0.5rem;
+  }
+
+  .choice-friend {
+    width: 100%;
+    padding: 0.5rem;
+  }
+
+  .view-choice {
+    padding: 0;
+  }
+
+  .week-scroll {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+
+  .week-days {
+    flex-wrap: wrap;
+    width: auto;
+    justify-content: center;
+  }
+
+  .day-item {
+    padding: 4px 6px;
+    min-width: 40px;
+    max-width: 50px;
+    font-size: 0.8rem;
+  }
+
+  .calendary {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .day-column {
+    min-width: 80px;
+    max-width: 120px;
+  }
+
+  .slot-time {
+    width: 45px;
+    font-size: 0.75rem;
+  }
+
+  .event-day, .event-week {
+    font-size: 0.7rem;
+    padding: 1px 2px;
+  }
+
+  #add-event-button {
+    right: 10px;
+    top: auto;
+    bottom: 10px;
+    position: fixed;
+    z-index: 10000;
+  }
+
+  footer .footer-content {
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .modal-content {
+    width: 90%;
+    padding: 1rem;
+  }
+
+  .week-schedule {
+    flex-direction: column;
+  }
+
+  .week-row {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .day-item {
+    min-width: 30px;
+    max-width: 40px;
+    font-size: 0.7rem;
+  }
+
+  .slot-time {
+    width: 35px;
+    font-size: 0.7rem;
+  }
+
+  .scroll-btn {
+    padding: 4px 6px;
+    font-size: 0.8rem;
+  }
+
+  .calendar-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .modal-content {
+    width: 95%;
+  }
+
+  .add-btn,
+  .close-btn {
+    width: 100%;
+    font-size: 0.85rem;
+  }
+}
+
 </style>

@@ -1,4 +1,4 @@
-from models.models import Notification, EventParticipant, User, Group, GroupMember, Event, EventDraft
+from models.models import Notification, Friend, EventParticipant, User, Group, GroupMember, Event, EventDraft
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_login import current_user, login_required
 from flask import current_app, request
@@ -188,20 +188,33 @@ def notify_event_participants(event, message, type):
 class UserNotifications(Resource):
     @jwt_required()
     def get(self):
-        notifications = Notification.query.filter_by(receiver_id=int(get_jwt_identity())).order_by(Notification.created_at.desc()).all()
-        
-        return [{
-            "id": n.id,
-            "sender_id": n.sender_id,
-            "sender_name": db.session.get(User, n.sender_id).name if n.sender_id else "Система",
-            "message": n.message,
-            "type": n.type,
-            "read_status": n.read_status,
-            "created_at": n.created_at.isoformat(),
-            "event_id": n.event_id,
-            "group_id": n.group_id,
-            "event_draft_id": n.event_draft_id
-        } for n in notifications]
+        notifications = Notification.query.filter_by(
+            receiver_id=int(get_jwt_identity())
+            ).order_by(Notification.created_at.desc()).all()
+        result = []       
+        for n in notifications:
+            friend_request_id = None
+            friend_request = db.session.query(Friend).filter_by(
+                        sender_id=n.sender_id,
+                        receiver_id=int(get_jwt_identity()),
+                        status='pending' 
+                    ).first()
+            if friend_request:
+                        friend_request_id = friend_request.id
+            result.append({
+                "id": n.id,
+                "sender_id": n.sender_id,
+                "sender_name": db.session.get(User, n.sender_id).name if n.sender_id else "Система",
+                "message": n.message,
+                "type": n.type,
+                "read_status": n.read_status,
+                "created_at": n.created_at.isoformat(),
+                "event_id": n.event_id,
+                "group_id": n.group_id,
+                "event_draft_id": n.event_draft_id,
+                "friend_request_id": friend_request_id
+            })
+        return result
 
 class UserInvitationNotifications(Resource):
     @jwt_required()
@@ -210,17 +223,30 @@ class UserInvitationNotifications(Resource):
             Notification.receiver_id == int(get_jwt_identity()),
             Notification.type == 'invitation'
         ).order_by(Notification.created_at.desc()).all()
-        
-        return [{
-            "id": n.id,
-            "sender_id": n.sender_id,
-            "sender_name": db.session.get(User, n.sender_id).name if n.sender_id else "Система",
-            "message": n.message,
-            "type": n.type,
-            "read_status": n.read_status,
-            "created_at": n.created_at.isoformat(),
-            "group_id": n.group_id  # Для заявок в друзья group_id будет null
-        } for n in notifications]
+        result = []       
+        for n in notifications:
+            friend_request_id = None
+            friend_request = db.session.query(Friend).filter_by(
+                        sender_id=n.sender_id,
+                        receiver_id=int(get_jwt_identity()),
+                        status='pending' 
+                    ).first()
+            if friend_request:
+                        friend_request_id = friend_request.id
+            result.append({
+                "id": n.id,
+                "sender_id": n.sender_id,
+                "sender_name": db.session.get(User, n.sender_id).name if n.sender_id else "Система",
+                "message": n.message,
+                "type": n.type,
+                "read_status": n.read_status,
+                "created_at": n.created_at.isoformat(),
+                "group_id": n.group_id,  # Для заявок в друзья group_id будет null
+                "event_id": n.event_id,
+                "event_draft_id": n.event_draft_id,
+                "friend_request_id": friend_request_id
+            })
+        return result
 
 class UserGeneralNotifications(Resource):
     @jwt_required()
@@ -229,19 +255,30 @@ class UserGeneralNotifications(Resource):
             Notification.receiver_id == int(get_jwt_identity()),
             Notification.type != 'invitation'
         ).order_by(Notification.created_at.desc()).all()
-        
-        return [{
-            "id": n.id,
-            "sender_id": n.sender_id,
-            "sender_name": db.session.get(User, n.sender_id).name if n.sender_id else "Система",
-            "message": n.message,
-            "type": n.type,
-            "read_status": n.read_status,
-            "created_at": n.created_at.isoformat(),
-            "event_id": n.event_id,
-            "group_id": n.group_id,
-            "event_draft_id": n.event_draft_id
-        } for n in notifications]
+        result = []       
+        for n in notifications:
+            friend_request_id = None
+            friend_request = db.session.query(Friend).filter_by(
+                        sender_id=n.sender_id,
+                        receiver_id=int(get_jwt_identity()),
+                        status='pending' 
+                    ).first()
+            if friend_request:
+                        friend_request_id = friend_request.id
+            result.append({
+                "id": n.id,
+                "sender_id": n.sender_id,
+                "sender_name": db.session.get(User, n.sender_id).name if n.sender_id else "Система",
+                "message": n.message,
+                "type": n.type,
+                "read_status": n.read_status,
+                "created_at": n.created_at.isoformat(),
+                "group_id": n.group_id,  # Для заявок в друзья group_id будет null
+                "event_id": n.event_id,
+                "event_draft_id": n.event_draft_id,
+                "friend_request_id": friend_request_id
+            })
+        return result
 
 #---------------POST_метод---------------------------------------
 class MarkNotificationAsRead(Resource):

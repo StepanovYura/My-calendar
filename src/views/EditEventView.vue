@@ -238,4 +238,52 @@ button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+@media (max-width: 768px) {
+  .edit-event-page {
+    width: 90%;
+    padding: 16px;
+    margin: 20px auto;
+  }
+
+  input,
+  textarea {
+    font-size: 0.95rem;
+    padding: 0.5rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  button {
+    width: 100%;
+  }
+
+  .add-friend {
+    flex-direction: column;
+  }
+
+  .add-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  h2 {
+    font-size: 1.2rem;
+    text-align: center;
+  }
+
+  label {
+    font-size: 0.95rem;
+  }
+
+  .participant-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+
 </style>

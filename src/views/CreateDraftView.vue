@@ -129,4 +129,51 @@ button {
   justify-content: space-between;
   gap: 1rem;
 }
+
+@media (max-width: 768px) {
+  .create-event-page {
+    max-width: 90%;
+    margin: 20px auto;
+    padding: 15px;
+  }
+
+  input,
+  textarea {
+    font-size: 0.9rem;
+  }
+
+  .slot-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .slot-row input {
+    width: 100%;
+  }
+
+  button {
+    font-size: 0.9rem;
+    padding: 0.6rem;
+  }
+
+  .buttons {
+    flex-direction: column;
+  }
+
+  .buttons button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  h2 {
+    font-size: 1.2rem;
+  }
+
+  label {
+    font-size: 0.9rem;
+  }
+}
+
+
 </style>

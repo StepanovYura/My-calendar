@@ -69,7 +69,6 @@ import CalendarMatch from '../components/CalendarMatch.vue'
 
 const groupsStore = useGroupsStore()
 const friendsStore = useFriendsStore()
-// friendsStore.fetchFriends()
 const authStore = useAuthStore()
 
 const showGroupDropdown = ref(false)
@@ -93,26 +92,18 @@ const selectedDateFormatted = computed(() =>
     : ''
 )
 
-console.log("DDDDD: ", selectedDateFormatted, selectedDate.value)
 const currentDayMatches = computed(() => {
   return matchDays.value[selectedDateFormatted.value] || null
 })
 
 function openModal(date) {
-  console.log("CCCCCC: ", date)
   selectedDate.value = date
   showModal.value = true
-  console.log("DDDDD: ", selectedDateFormatted)
 }
 
 function closeModal() {
   showModal.value = false
 }
-
-onMounted(async () => {
-  groupsStore.fetchGroups()
-  friendsStore.fetchFriends()
-})
 
 function toggleGroupDropdown() {
   showGroupDropdown.value = !showGroupDropdown.value
@@ -120,6 +111,7 @@ function toggleGroupDropdown() {
 }
 
 function toggleFriendDropdown() {
+  console.log("Друзья для выбора:", friendsStore.friends)
   showFriendDropdown.value = !showFriendDropdown.value
   showGroupDropdown.value = false
 }
@@ -144,18 +136,18 @@ function selectFriend(friend) {
 async function loadMatches() {
   const authStore = useAuthStore()
   const token = authStore.token
-
+  
   const participants = selectedGroup.value
-    ? groupsStore.groupDetails?.members?.map(m => m.user_id) || []
-    : selectedFriend.value
-    ? [selectedFriend.value.id]
-    : []
+  ? groupsStore.groupDetails?.members?.map(m => m.user_id) || []
+  : selectedFriend.value
+  ? [selectedFriend.value.id]
+  : []
   console.log("Участники группы:", participants)
   if (participants.length === 0) {
     console.warn('Нет выбранных участников для загрузки совпадений')
     return
   }
-
+  
   try {
     isLoading.value = true
     const data = await getMatchDays(token, participants, currentYear.value, currentMonth.value + 1)
@@ -177,7 +169,7 @@ function handleMonthChange({ year, month }) {
 
 function exportToExcel() {
   const rows = []
-
+  
   for (const [date, data] of Object.entries(matchDays.value)) {
     if (data.matches.length === 0) {
       rows.push({
@@ -197,12 +189,20 @@ function exportToExcel() {
       }
     }
   }
-
+  
   const ws = XLSX.utils.json_to_sheet(rows)
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'Match Statistics')
   XLSX.writeFile(wb, 'match_statistics.xlsx')
 }
+
+console.log("MatchView mounted")
+onMounted(async () => {
+  console.log("MatchView onMounted")
+  groupsStore.fetchGroups()
+  await friendsStore.fetchFriends()
+})
+
 </script>
 
 <style scoped>
@@ -414,4 +414,75 @@ footer {
   cursor: pointer;
 }
 
+@media (max-width: 768px) {
+  .views {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .choice-friend {
+    padding: 1rem 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .dropdown {
+    width: 100%;
+  }
+
+  .match-btn {
+    width: 100%;
+    min-width: auto;
+    font-size: 0.9rem;
+  }
+
+  .dropdown-content {
+    position: static;
+    border: 1px solid #ccc;
+    width: 100%;
+  }
+
+  .calendary {
+    height: auto;
+    max-height: none;
+  }
+
+  .modal-content {
+    width: 90%;
+    padding: 1rem;
+  }
+
+  footer {
+    padding: 10px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .match-btn {
+    font-size: 0.8rem;
+    padding: 0.4rem;
+  }
+
+  .calendar-container {
+    padding: 0.5rem;
+  }
+
+  .calendar-grid {
+    gap: 3px;
+  }
+
+  .day-cell {
+    padding: 6px 0;
+    font-size: 0.75rem;
+  }
+
+  .modal-content {
+    width: 95%;
+  }
+  
+  .close-btn {
+    width: 100%;
+    font-size: 0.85rem;
+  }
+}
 </style>

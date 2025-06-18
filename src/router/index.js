@@ -22,7 +22,7 @@ const routes = [
   { path: '/match', name: 'Match', component: MatchView, meta: { requiresAuth: true } },
   { path: '/messages', name: 'Messages', component: MessagesView, meta: { requiresAuth: true } },
   { path: '/profile', name: 'Profile', component: ProfileView, meta: { requiresAuth: true } },
-  { path: '/admin', name: 'Admin', component: AdminView, meta: { requiresAdmin: true } },
+  { path: '/admin', name: 'Admin', component: AdminView, meta: {requiresAuth: true, requiresAdmin: true } },
   { path: '/changePswd', name: 'ChangePswd', component: ChangePswdView },
   { path: '/register', name: 'Register', component: RegisterView },
   { path: '/create-event', name: 'CreateEvent', component: CreateEventView, meta: { requiresAuth: true } },
@@ -37,15 +37,48 @@ const router = createRouter({
   routes
 })
 
+// export async function authGuard(to, from, next) {
+//   const authStore = useAuthStore()
+//   const isAuthenticated = await authStore.checkAuth()
+  
+//   if (to.meta.requiresAuth && !isAuthenticated) {
+//     next('/login')
+//   } else if (to.meta.requiresGuest && isAuthenticated) {
+//     next('/')
+//   } else {
+//     next()
+//   }
+// }
+
+// export async function authGuard(to, from, next) {
+//   const authStore = useAuthStore()
+//   const isAuthenticated = await authStore.checkAuth()
+
+//   if (to.meta.requiresAuth && !isAuthenticated) {
+//     next('/login')
+//   } 
+//   else if (to.meta.requiresGuest && isAuthenticated) {
+//     next(authStore.user?.role === 'admin' ? '/admin' : '/')
+//   } 
+//   else if (to.meta.requiresAdmin && (!isAuthenticated || authStore.user?.role !== 'admin')) {
+//     next('/')  
+//   }
+//   else {
+//     next()
+//   }
+// }
+
 export async function authGuard(to, from, next) {
   const authStore = useAuthStore()
   const isAuthenticated = await authStore.checkAuth()
-  
+
   if (to.meta.requiresAuth && !isAuthenticated) {
     next('/login')
-  } else if (to.meta.requiresGuest && isAuthenticated) {
-    next('/')
-  } else {
+  } 
+  else if (to.meta.requiresAdmin && isAuthenticated && authStore.user?.role !== 'admin') {
+    next('/')  // Защита от не-админов
+  } 
+  else {
     next()
   }
 }

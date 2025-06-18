@@ -17,6 +17,12 @@ class MatchDays(Resource):
 
         participant_ids = [int(pid) for pid in participants_str.split(',')]
 
+        if int(get_jwt_identity()) not in participant_ids:
+            participant_ids.append(int(get_jwt_identity()))
+
+        print(f"participant_ids: {participant_ids}")
+        print(f"current_user_id: {get_jwt_identity()}")
+        
         result = calculate_matches(participant_ids, year, month, int(get_jwt_identity()))
 
         return result
@@ -78,24 +84,26 @@ def calculate_matches(participant_ids, year, month, current_user_id):
         time = day_start
         while time + timedelta(hours=1) <= day_end:
             window_end = time + timedelta(hours=1)
+            # print(f"Проверка слота {time.strftime('%H:%M')} - {window_end.strftime('%H:%M')}")
 
             # Проверяем доступность текущего пользователя
             current_free = any(
                 slot_start <= time and slot_end >= window_end
                 for slot_start, slot_end in user_free.get(current_user_id, [])
             )
-
+            # print(f"  Текущий пользователь свободен? {current_free}")
             if not current_free:
                 time += timedelta(minutes=30)
                 continue  # Текущий пользователь занят — слот неинтересен
-
+            # print(f"День {day}: user_free =")
             available_others = []
             for pid, slots in user_free.items():
+                # print(f"  {pid}: {[ (s[0].strftime('%H:%M'), s[1].strftime('%H:%M')) for s in slots ]}")
                 if pid == current_user_id:
                     continue  # Не проверяем сам с собой
                 if any(slot_start <= time and slot_end >= window_end for slot_start, slot_end in slots):
                     available_others.append(user_names[pid])
-
+            # print(f"  Доступные другие участники: {available_others}")
             if available_others:
                 matches.append({
                     'interval': f"{time.strftime('%H:%M')}-{window_end.strftime('%H:%M')}",
@@ -111,6 +119,20 @@ def calculate_matches(participant_ids, year, month, current_user_id):
             color = 'yellow'  # Есть хотя бы один участник совпадающий с текущим
         else:
             color = 'red'  # Совпадений нет
+
+        # # Определяем цвет
+        # if not matches:
+        #     # Нет событий у всех = зелёный
+        #     if all(len(user_free[pid]) == 1 and user_free[pid][0][0] == day_start and user_free[pid][0][1] == day_end for pid in participant_ids):
+        #         color = 'green'
+        #     else:
+        #         color = 'red'
+        # elif any(len(m['users']) == len(participant_ids) - 1 for m in matches):
+        #     color = 'green'
+        # elif any(m['users'] for m in matches):
+        #     color = 'yellow'
+        # else:
+        #     color = 'red'
 
         result[f"{year}-{month:02d}-{day:02d}"] = {
             'color': color,
