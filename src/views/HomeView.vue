@@ -763,21 +763,16 @@ footer {
   background-color: #c5cae9; /* другой цвет для друга */
 }
 
-.add-btn,
+/* .add-btn,
 .close-btn {
   margin-top: 1rem;
   padding: 0.5rem 1rem;
   border: none;
-  background-color: #2a7ae2;
+  background-color: black;
   color: white;
   cursor: pointer;
   border-radius: 4px;
-}
-
-.close-btn {
-  background-color: #aaa;
-  margin-left: 0.5rem;
-}
+} */
 
 .scroll-btn {
   background-color: black;

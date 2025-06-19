@@ -257,7 +257,9 @@ function closeEventModal() {
 .has-event {
   background-color: yellow;
 }
-
+.has-event.friend {
+  background-color: aqua;
+}
 .clickable-event {
   cursor: pointer;
   padding: 4px;

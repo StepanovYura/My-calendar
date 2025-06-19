@@ -3,7 +3,7 @@
     <nav class="navbar">
       <div class="logo">
         <a href="/" v-if="!isAdmin">
-          <img src="" alt="logo" />
+          <img src="../assets/logo.png" alt="logo" width="40" height="40" />
         </a>
       </div>
       <div class="nowData"><p>{{ currentDate }}</p></div>

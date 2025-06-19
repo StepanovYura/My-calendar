@@ -4,13 +4,13 @@
     <div class="views">
       <div class="choice-friend">
         <button type="button" id="comm-event-choice" class="comm-btn" @click="loadEvents">
-          <img src="" alt="событие">
+          событие
         </button>
         <button type="button" id="comm-group-choice" class="comm-btn" @click="loadGroups">
-          <img src="" alt="группа">
+          группа
         </button>
         <button type="button" id="comm-friends-choice" class="comm-btn" @click="loadFriends">
-          <img src="" alt="друзья">
+          друзья
         </button>
       </div>
       <div class="calendary">

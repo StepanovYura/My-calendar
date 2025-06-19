@@ -1,6 +1,6 @@
 <template>
   <div class="auth-page">
-    <img src="" id="image-logo" alt="logo">
+    <img src="../assets/logo.png" id="image-logo" alt="logo" width="100" height="100">
     <h2>Изменение пароля</h2>
     <div class="main-field">
       <form id="main" @submit.prevent="handlePasswordChange">
@@ -85,7 +85,6 @@ async function handlePasswordChange() {
   }
   
   const success = await authStore.changePassword({
-    email: form.value.email,
     oldPassword: form.value.oldPassword,
     newPassword: form.value.newPassword
   })

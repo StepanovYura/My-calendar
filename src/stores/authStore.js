@@ -75,14 +75,11 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    async changePassword(passwordData) {
+    async changePassword({ oldPassword, newPassword }) {
       this.loading = true
       this.error = null
       try {
-        await changePassword({
-          ...passwordData,
-          token: this.token
-        })
+        await changePassword(this.token, oldPassword, newPassword)
         return true
       } catch (error) {
         this.error = error.message || 'Ошибка смены пароля'
