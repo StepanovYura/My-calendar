@@ -1,7 +1,7 @@
 import { handleResponse } from './utils';
 
-const API_BASE = 'http://127.0.0.1:5000/api/events';
-
+// const API_BASE = 'http://127.0.0.1:5000/api/events';
+const API_BASE = `${import.meta.env.VITE_API_BASE_URL}/events`;
 /**
  * Получение событий пользователя (по дню, неделе, месяцу, с возможностью указать user_id)
  * @param {string} token - JWT токен пользователя

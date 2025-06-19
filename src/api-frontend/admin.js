@@ -1,6 +1,7 @@
 import { handleResponse } from './utils';
 
-const API_BASE = 'http://127.0.0.1:5000/api/admin';
+// const API_BASE = 'http://127.0.0.1:5000/api/admin';
+const API_BASE = `${import.meta.env.VITE_API_BASE_URL}/admin`;
 
 /**
  * Получить список всех пользователей (только для админа)

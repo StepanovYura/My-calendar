@@ -1,7 +1,7 @@
 import { handleResponse } from './utils'
 
-const API_BASE = 'http://127.0.0.1:5000/api'
-
+// const API_BASE = 'http://127.0.0.1:5000/api';
+const API_BASE = `${import.meta.env.VITE_API_BASE_URL}`;
 /**
  * Получение совпадений по участникам за месяц
  * @param {string} token - JWT токен
