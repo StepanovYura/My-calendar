@@ -8,7 +8,7 @@ import os
 # static_folder = папка с собранным фронтом
 app = Flask(__name__, static_folder='dist', static_url_path='')
 app.config['SECRET_KEY'] = 'my-secret-key'  # использует Flask-Login
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://postgres:password@localhost:5432/schedule_db').replace('postgres://', 'postgresql://')#'postgresql://postgres:Namigra_20@localhost:5432/schedule_db?options=-c search_path=schedule_app,public'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://myappuser:MyAppUserStrongPassword@YuraSt-4632.postgres.pythonanywhere-services.com:14632/myappdb'  # os.getenv('DATABASE_URL', 'postgresql://postgres:password@localhost:5432/schedule_db').replace('postgres://', 'postgresql://')#'postgresql://postgres:Namigra_20@localhost:5432/schedule_db?options=-c search_path=schedule_app,public'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
