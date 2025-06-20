@@ -4,12 +4,12 @@ from datetime import datetime
 from extensions import db
 
 # ENUM-типы
-privacy_setting = ENUM('all', 'none', name='privacy_setting', schema='public', create_type=False)
-user_role = ENUM('user', 'admin', name='user_role', schema='public', create_type=False)
-friend_status = ENUM('pending', 'accepted', 'declined', name='friend_status', schema='public', create_type=False)
-draft_status = ENUM('voting', 'successful', 'failed', name='draft_status', schema='public', create_type=False)
-event_status = ENUM('active', 'cancelled', name='event_status', schema='public', create_type=False)
-notification_type = ENUM('invitation', 'reminder', 'update', 'result', schema='public', name='notification_type', create_type=False)
+privacy_setting = ENUM('all', 'none', name='privacy_setting', create_type=False)
+user_role = ENUM('user', 'admin', name='user_role', create_type=False)
+friend_status = ENUM('pending', 'accepted', 'declined', name='friend_status', create_type=False)
+draft_status = ENUM('voting', 'successful', 'failed', name='draft_status', create_type=False)
+event_status = ENUM('active', 'cancelled', name='event_status', create_type=False)
+notification_type = ENUM('invitation', 'reminder', 'update', 'result', name='notification_type', create_type=False)
 
 class User(db.Model):
     __tablename__ = 'user'
